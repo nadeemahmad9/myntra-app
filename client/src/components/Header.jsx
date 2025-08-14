@@ -296,7 +296,7 @@ const Header = () => {
 
 
                         <motion.div
-                            className="hidden md:flex flex-col items-center cursor-pointer relative"
+                            className=" md:flex flex-col items-center cursor-pointer relative"
                             whileHover={{ scale: 1.1 }}
                             onClick={handleWishlistClick}
                         >
@@ -317,11 +317,7 @@ const Header = () => {
                         >
                             <div className="relative">
                                 <ShoppingBag className="w-5 h-5" />
-                                {/* {getCartItemsCount() > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                                        {getCartItemsCount()}
-                                    </span>
-                                )} */}
+
                                 {getCartItemsCount() > 0 && (
                                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                                         {getCartItemsCount()}
