@@ -31,12 +31,12 @@ app.use(cors({
      origin: ["https://zyntrashop.netlify.app"],
     credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"],
 
 }))
 
-app.options("*", cors());
-// Session setup
+app.options("/*", cors());// Session setup
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
