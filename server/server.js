@@ -19,9 +19,12 @@ const wishlistRoutes = require("./routes/wishlistRoutes")
 
 dotenv.config()
 
-connectDB()
 
 const app = express()
+app.use(express.json())
+connectDB()
+
+
 
 // Middleware
 app.use(cors({
@@ -43,7 +46,6 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(express.json())
 
 
 app.use("/auth", require("./routes/googleAuth"));
