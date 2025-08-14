@@ -79,6 +79,7 @@ const Header = () => {
         { name: "HOME", href: "/home" },
         { name: "BEAUTY", href: "/beauty" },
         { name: "GENZ", href: "/genz" },
+
         // { name: "STUDIO", href: "/studio", isNew: true },
     ]
 
@@ -355,6 +356,8 @@ const Header = () => {
                     </div>
                 </form>
 
+
+
                 {/* Mobile Menu */}
                 {isMenuOpen && (
                     <motion.div
@@ -371,6 +374,31 @@ const Header = () => {
                                 </a>
                             ))}
                         </nav>
+
+                        <motion.div
+                            className="hidden md:flex flex-col items-center cursor-pointer relative"
+                            whileHover={{ scale: 1.1 }}
+                        >
+                            {user ? (
+                                user?.profilePic && user.profilePic.trim() !== "" ? (
+                                    <img
+                                        src={user.profilePic}
+                                        alt={user.name || "User"}
+                                        className="w-6 h-6 rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-white">
+                                        {user?.name?.[0]?.toUpperCase() || "?"}
+                                    </div>
+                                )
+                            ) : (
+                                <User className="w-6 h-6" />
+                            )}
+
+                            <span className="text-xs mt-1 font-medium">
+                                {isAuthenticated ? `Hi, ${user?.name?.split(" ")[0]}` : "Profile"}
+                            </span>
+                        </motion.div>
                     </motion.div>
                 )}
 
