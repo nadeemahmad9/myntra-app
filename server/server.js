@@ -25,9 +25,8 @@ const app = express()
 
 // Middleware
 app.use(cors({
-     origin: ["https://zyntrashop.netlify.app/"],
+     origin: ["https://zyntrashop.netlify.app"],
     credentials: true,
-      exposedHeaders: ["Content-Type", "Authorization"]
 
 }))
 
