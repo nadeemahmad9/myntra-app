@@ -31,11 +31,9 @@ app.use(cors({
      origin: ["https://zyntrashop.netlify.app"],
     credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-
 }))
 
-app.options("/*", cors());// Session setup
+
 
 app.use(
   session({
@@ -49,32 +47,8 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-
 app.use("/auth", require("./routes/googleAuth"));
 
-// app.get("/products", async (req, res) => {
-//   try {
-//     const { category, minPrice, maxPrice, brand, rating } = req.query;
-
-//     let query = {};
-
-//     if (category) query.category = category;
-//     if (brand) query.brand = { $regex: brand, $options: "i" };
-//     if (rating) query.rating = { $gte: Number(rating) };
-//     if (minPrice || maxPrice) {
-//       query.price = {};
-//       if (minPrice) query.price.$gte = Number(minPrice);
-//       if (maxPrice) query.price.$lte = Number(maxPrice);
-//     }
-
-//     const products = await Product.find(query);
-//     res.json(products);
-//   } catch (err) {
-//     console.error("Error fetching products:", err);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
 
 
 // Routes
