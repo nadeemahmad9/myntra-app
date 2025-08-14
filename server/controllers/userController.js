@@ -70,7 +70,8 @@ const googleAuth = asyncHandler(async (req, res) => {
 
 
 const registerUser = asyncHandler(async (req, res) => {
-const { name, email, password, phone } = req.body.name;
+const { name, email, password, phone } = req.body;
+
 
   const userExists = await User.findOne({ email })
   if (userExists) {
