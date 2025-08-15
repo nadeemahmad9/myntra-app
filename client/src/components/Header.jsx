@@ -294,7 +294,7 @@ const Header = () => {
                     </form>
 
                     {/* Right Icons */}
-                    <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-6 ">
 
 
 
@@ -322,10 +322,10 @@ const Header = () => {
                                         </div>
                                     )
                                 ) : (
-                                    <User className="w-6 h-6" />
+                                    <User className="w-6 h-6 mx-1 flex items-center justify-center" />
                                 )}
 
-                                <span className="hidden md:flex text-xs mt-1 font-medium">
+                                <span className="hidden md:flex  text-xs  font-medium items-center justify-center">
                                     {isAuthenticated ? `Hi, ${user?.name?.split(" ")[0]}` : "Profile"}
                                 </span>
                             </motion.div>
@@ -373,7 +373,7 @@ const Header = () => {
 
 
                             </div>
-                            <span className="text-xs font-medium">Bag</span>
+                            <span className="hidden md:flex text-xs font-medium">Bag</span>
                         </motion.div>
 
                         {/* Mobile Menu Button */}
