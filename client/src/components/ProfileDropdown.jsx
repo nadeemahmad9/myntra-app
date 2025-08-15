@@ -22,7 +22,7 @@ const ProfileDropdown = ({ isLoggedIn = false }) => {
                     {!isLoggedIn ? (
                         <Link
                             to="/login"
-                            className="inline-block w-full text-center bg-pink-600 text-white py-1.5 rounded text-sm font-medium mb-3"
+                            className="inline-block w-full text-center border-pink-600 bg-pink-600 text-white py-1.5 rounded text-sm font-medium mb-3"
                         >
                             Login / Signup
                         </Link>

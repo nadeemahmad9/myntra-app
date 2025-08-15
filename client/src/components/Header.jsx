@@ -120,7 +120,7 @@ const Header = () => {
 
     const renderProfileDropdown = () => (
         <motion.div
-            className="absolute top-12 right-20 w-64 bg-white shadow-xl rounded-md z-40 p-4"
+            className="absolute top-12  right-0 w-60 bg-white shadow-xl rounded-md z-40 p-4"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -134,18 +134,64 @@ const Header = () => {
                     <div>
                         <p className="font-semibold">Welcome {user?.name}</p>
                         <p className="text-xs text-gray-500">To access account and manage orders</p>
-                        {!isAuthenticated && (
+                        {/* {!isAuthenticated && (
                             <Link to="/login" className="text-pink-500 text-xs underline">Login / Signup</Link>
+                        )} */}
+                        {!isAuthenticated ? (
+                            <Link
+                                to="/login"
+                                className="inline-block w-full text-center border-pink-600 bg-pink-600 text-white py-1.5 rounded text-sm font-medium mb-3"
+                            >
+                                Login / Signup
+                            </Link>
+                        ) : (
+                            <div>
+                                <p className="text-sm text-green-600 mb-3">You're logged in</p>
+                                <Link to="/logout" className="text-sm text-red-600 mb-3">logout</Link>
+                            </div>
                         )}
                     </div>
                 </div>
                 <hr className="my-2" />
-                <ul className="space-y-1">
+                {/* <ul className="space-y-1">
                     <li><Link to="/profile/orders" className="hover:text-pink-500 text-sm block">Orders</Link></li>
                     <li><Link to="/wishlist" className="hover:text-pink-500 text-sm block">Wishlist</Link></li>
                     <li><Link to="/profile/cards" className="hover:text-pink-500 text-sm block">Saved Cards</Link></li>
                     <li><Link to="/profile/address" className="hover:text-pink-500 text-sm block">Saved Addresses</Link></li>
                     <li><Link to="/profile/coupons" className="hover:text-pink-500 text-sm block">Coupons</Link></li>
+                </ul> */}
+
+                <ul className="text-sm space-y-2">
+                    <li>
+                        <Link to="/orders" className="hover:underline">Orders</Link>
+                    </li>
+                    <li>
+                        <Link to="/wishlist" className="hover:underline">Wishlist</Link>
+                    </li>
+                    <li>
+                        <Link to="/gift-cards" className="hover:underline">Gift Cards</Link>
+                    </li>
+                    <li>
+                        <Link to="/contact" className="hover:underline">Contact Us</Link>
+                    </li>
+                    <li>
+                        <Link to="/insider" className="hover:underline text-pink-600 font-semibold">Myntra Insider <span className="text-xs bg-yellow-300 px-1 py-0.5 rounded">New</span></Link>
+                    </li>
+                    <li>
+                        <Link to="/credit" className="hover:underline">Myntra Credit</Link>
+                    </li>
+                    <li>
+                        <Link to="/coupons" className="hover:underline">Coupons</Link>
+                    </li>
+                    <li>
+                        <Link to="/saved-cards" className="hover:underline">Saved Cards</Link>
+                    </li>
+                    <li>
+                        <Link to="/vpa" className="hover:underline">Saved VPA</Link>
+                    </li>
+                    <li>
+                        <Link to="/addresses" className="hover:underline">Saved Addresses</Link>
+                    </li>
                 </ul>
             </div>
         </motion.div>
@@ -205,7 +251,7 @@ const Header = () => {
                     {/* Logo */}
                     <motion.div whileHover={{ scale: 1.05 }}>
                         <Link to="/" className="flex items-center">
-                            <img src="/myntraLogo.png" alt="Logo" className="h-6 px-3" />
+                            <img src="/myntraLogo.png" alt="Logo" className="h-8 px-3" />
                         </Link>
                     </motion.div>
 
