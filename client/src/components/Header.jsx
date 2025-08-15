@@ -260,7 +260,7 @@ const Header = () => {
                         >
 
                             <motion.div
-                                className="md:flex flex-col items-center cursor-pointer relative"
+                                className=" flex-col items-center cursor-pointer relative"
                                 whileHover={{ scale: 1.1 }}
                             >
                                 {user ? (
@@ -279,7 +279,7 @@ const Header = () => {
                                     <User className="w-6 h-6" />
                                 )}
 
-                                <span className="md:hidden text-xs mt-1 font-medium">
+                                <span className="hidden md:flex text-xs mt-1 font-medium">
                                     {isAuthenticated ? `Hi, ${user?.name?.split(" ")[0]}` : "Profile"}
                                 </span>
                             </motion.div>
