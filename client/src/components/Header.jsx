@@ -253,7 +253,7 @@ const Header = () => {
 
 
                         <div
-                            className="relative hidden md:flex items-center gap-2 cursor-pointer"
+                            className="relative flex items-center gap-2 cursor-pointer"
                             onMouseEnter={() => setProfileHovered(true)}
                             onMouseLeave={() => setProfileHovered(false)}
                             onClick={handleUserClick}
