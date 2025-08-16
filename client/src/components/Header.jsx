@@ -325,7 +325,7 @@ const Header = () => {
                                     <User className="w-6 h-6 mx-1 " />
                                 )}
 
-                                <span className="hidden md:flex  text-xs  font-medium ml-2 mr-5">
+                                <span className="hidden md:flex  text-xs  font-medium mr-5">
                                     {isAuthenticated ? `Hi, ${user?.name?.split(" ")[0]}` : "Profile"}
                                 </span>
                             </motion.div>
