@@ -361,7 +361,7 @@ const CrazyDeals = () => {
             discount: "STARTING ₹399",
             image: "https://assets.myntassets.com/w_196,c_limit,fl_progressive,dpr_2.0/assets/images/2025/JULY/23/kKAdjKiM_d6307904f635470f953b449859951411.png",
             bgColor: "bg-orange-300",
-            subcategory: "clothes",
+            subcategory: "dresses",
         },
         {
             _id: 9,
@@ -370,7 +370,7 @@ const CrazyDeals = () => {
             discount: "STARTING ₹399",
             image: "https://assets.myntassets.com/f_webp,w_196,c_limit,fl_progressive,dpr_2.0/assets/images/2025/JULY/23/X9DTXwIc_de832eb0d9d7446893a5bc327b4cf8ac.png",
             bgColor: "bg-orange-300",
-            subcategory: "clothes",
+            subcategory: "denim",
         },
     ]
 
