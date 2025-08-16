@@ -322,7 +322,7 @@ const Header = () => {
                                         </div>
                                     )
                                 ) : (
-                                    <User className="w-6 h-6 mx-1 " />
+                                    <User className="w-6 h-6 mx-3 " />
                                 )}
 
                                 <span className="hidden md:flex  text-xs  font-medium mr-5">
