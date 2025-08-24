@@ -168,22 +168,57 @@ setCart({ cartItems: cartData.data }) // ✅ FIX: wrap in correct shape
   }, [cart])
 
 
-  const addToCart = async (productId, qty = 1, size) => {
+//   const addToCart = async (productId, qty = 1, size) => {
+//   try {
+//     if (isLoggedIn()) {
+//       const { data } = await cartService.addToCart(productId, qty, size)
+//       setCart({ cartItems: data })
+//     } else {
+//       const newItem = { productId, qty, size, _id: Date.now().toString(), price: 100 }
+//       const updatedItems = [...getGuestCart(), newItem]
+//       saveGuestCart(updatedItems)
+//       setCart({ cartItems: updatedItems })
+//     }
+//     toast.success("Item added to cart!")
+//   } catch (error) {
+//     toast.error(error?.response?.data?.message || "Failed to add item to cart")
+//   }
+// }
+
+const addToCart = async (productId, qty = 1, size) => {
   try {
+    const tempId = Date.now().toString();
+    const newItem = { productId, qty, size, _id: tempId, price: 100 };
+
+    // 🔥 Optimistically update state (instant UI)
+    setCart(prev => ({
+      cartItems: [...(prev?.cartItems || []), newItem],
+    }));
+
     if (isLoggedIn()) {
-      const { data } = await cartService.addToCart(productId, qty, size)
-      setCart({ cartItems: data })
+      // Save to backend
+      const { data } = await cartService.addToCart(productId, qty, size);
+
+      // ✅ Sync with real cart from backend
+      setCart({ cartItems: data });
     } else {
-      const newItem = { productId, qty, size, _id: Date.now().toString(), price: 100 }
-      const updatedItems = [...getGuestCart(), newItem]
-      saveGuestCart(updatedItems)
-      setCart({ cartItems: updatedItems })
+      // Guest logic stays the same
+      const updatedItems = [...getGuestCart(), newItem];
+      saveGuestCart(updatedItems);
+      setCart({ cartItems: updatedItems });
     }
-    toast.success("Item added to cart!")
+
+    toast.success("Item added to cart!");
   } catch (error) {
-    toast.error(error?.response?.data?.message || "Failed to add item to cart")
+    toast.error(error?.response?.data?.message || "Failed to add item to cart");
+
+    // ❌ Rollback optimistic update if failed
+    setCart(prev => ({
+      cartItems: prev.cartItems.filter(item => item._id !== tempId),
+    }));
   }
-}
+};
+
 
   const updateCartItem = async (cartItemId, qty) => {
     try {
