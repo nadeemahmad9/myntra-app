@@ -251,7 +251,7 @@ const Header = () => {
                     {/* Logo */}
                     <motion.div whileHover={{ scale: 1.05 }}>
                         <Link to="/" className="flex items-center">
-                            <img src="/myntraLogo.png" alt="Logo" className="h-8 px-3" />
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/bc/Myntra_Logo.png?20210915004801" alt="Logo" className="h-8 px-3" />
                         </Link>
                     </motion.div>
 
