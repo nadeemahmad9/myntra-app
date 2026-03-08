@@ -6,9 +6,7 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (userData, { rejectWithValue }) => {
     try {
-      const config = {
-        headers: { 'Content-Type': 'application/json' }
-      };
+      const config = { headers: { 'Content-Type': 'application/json' } };
       const { data } = await axios.post('http://localhost:5000/api/users/login', userData, config);
 
       localStorage.setItem('token', data.token);
@@ -16,11 +14,26 @@ export const loginUser = createAsyncThunk(
 
       return data.user;
     } catch (error) {
-      return rejectWithValue(
-        error.response && error.response.data.message
-          ? error.response.data.message
-          : error.message
-      );
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// ✅ 2. Register AsyncThunk (Naya Add Kiya Gaya)
+export const registerUser = createAsyncThunk(
+  'auth/registerUser',
+  async (userData, { rejectWithValue }) => {
+    try {
+      const config = { headers: { 'Content-Type': 'application/json' } };
+      // Backend route: /api/users (aapke controller ke mutabik)
+      const { data } = await axios.post('http://localhost:5000/api/users', userData, config);
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userInfo', JSON.stringify(data.user));
+
+      return data.user;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -41,19 +54,13 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action) => {
-  state.user = action.payload;
-  state.isAuthenticated = true;
-  // ✅ Ye line add karein taaki refresh pe bhi naya data rahe
-  localStorage.setItem('userInfo', JSON.stringify(action.payload));
-},
-    
-    // ✅ ADDED: Naya Address array update karne ke liye
+      state.user = action.payload;
+      state.isAuthenticated = true;
+      localStorage.setItem('userInfo', JSON.stringify(action.payload));
+    },
     updateAddresses: (state, action) => {
       if (state.user) {
-        // Redux state update karein
         state.user.addresses = action.payload;
-        
-        // LocalStorage ko bhi sync karein taaki refresh pe purana data na dikhe
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (userInfo) {
           userInfo.addresses = action.payload;
@@ -61,7 +68,6 @@ const authSlice = createSlice({
         }
       }
     },
-
     logoutUser: (state) => {
       state.user = null;
       state.isAuthenticated = false;
@@ -69,14 +75,13 @@ const authSlice = createSlice({
       localStorage.removeItem('userInfo');
       localStorage.removeItem('token');
     },
-    
     clearError: (state) => {
       state.error = null;
     }
   },
-  
   extraReducers: (builder) => {
     builder
+      // Login Handlers
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -89,10 +94,23 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // ✅ Register Handlers
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
-// ✅ updateAddresses ko bhi export karein
 export const { setCredentials, logoutUser, clearError, updateAddresses } = authSlice.actions;
 export default authSlice.reducer;
