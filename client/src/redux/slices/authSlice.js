@@ -7,7 +7,7 @@ export const loginUser = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const config = { headers: { 'Content-Type': 'application/json' } };
-      const { data } = await axios.post('http://localhost:5000/api/users/login', userData, config);
+      const { data } = await axios.post('https://myntra-backend-he3a.onrender.com/api/users/login', userData, config);
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('userInfo', JSON.stringify(data.user));
@@ -26,7 +26,7 @@ export const registerUser = createAsyncThunk(
     try {
       const config = { headers: { 'Content-Type': 'application/json' } };
       // Backend route: /api/users (aapke controller ke mutabik)
-      const { data } = await axios.post('http://localhost:5000/api/users', userData, config);
+      const { data } = await axios.post('https://myntra-backend-he3a.onrender.com/api/users', userData, config);
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('userInfo', JSON.stringify(data.user));
