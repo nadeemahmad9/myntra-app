@@ -51,17 +51,34 @@ const SubcategoryListing = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/products/subcategory/${subcategory}`)
-                const data = await res.json()
-                setAllProducts(data)
-                setFilteredProducts(data)
-            } catch (error) {
-                console.error("Error fetching products:", error)
-            }
-        }
+                // ✅ Fix 1: Route ko update kiya query parameter use karne ke liye
+                // Taaki ye aapke productRoutes.js (router.route("/").get(getProducts)) se match kare
+                const url = `${import.meta.env.VITE_BACKEND_URL}/api/products?subcategory=${subcategory}`;
 
-        fetchProducts()
-    }, [subcategory])
+                const res = await fetch(url);
+                const data = await res.json();
+
+                // ✅ Fix 2: Data structure check
+                // Aapka controller { success: true, products: [...] } bhejta hai
+                if (data.success && data.products) {
+                    setAllProducts(data.products);
+                    setFilteredProducts(data.products);
+                } else {
+                    // Agar data.products nahi milta toh empty array set karein
+                    setAllProducts([]);
+                    setFilteredProducts([]);
+                }
+            } catch (error) {
+                console.error("Error fetching products:", error);
+                setAllProducts([]);
+                setFilteredProducts([]);
+            }
+        };
+
+        if (subcategory) {
+            fetchProducts();
+        }
+    }, [subcategory]);
 
     useEffect(() => {
         applyFilters()

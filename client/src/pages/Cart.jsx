@@ -1,1291 +1,149 @@
-// import { motion } from "framer-motion"
-// import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
-// import { useApp } from "../context/AppContext"
-
-// import { Link, useNavigate } from "react-router-dom"
-
-// const Cart = () => {
-//     const { cart, isAuthenticated } = useApp()
-//     const navigate = useNavigate()
-
-//     const handleQuantityChange = async (cartItemId, newQuantity) => {
-//         if (newQuantity === 0) {
-//             await cart.removeFromCart(cartItemId)
-//         } else {
-//             await cart.updateCartItem(cartItemId, newQuantity)
-//         }
-//     }
-
-//     const handleCheckout = () => {
-//         if (!isAuthenticated) {
-//             navigate("/login?redirect=checkout")
-//         } else {
-//             navigate("/checkout")
-//         }
-//     }
-
-//     if (cart.loading) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <div className="spinner mx-auto mb-4"></div>
-//                     <p>Loading cart...</p>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     if (cart.cartItems.length === 0) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-//                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Your bag is empty</h2>
-//                     <p className="text-gray-600 mb-6">Add some products to get started</p>
-//                     <Link to="/" className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
-//                         Continue Shopping
-//                     </Link>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     return (
-//         <div className="min-h-screen bg-gray-50">
-//             <div className="container mx-auto px-4 py-8">
-//                 <h1 className="text-2xl font-bold mb-8">Shopping Bag ({cart.cartItems.length} items)</h1>
-
-//                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-//                     {/* Cart Items */}
-//                     <div className="lg:col-span-2 space-y-4">
-//                         {cart.cartItems.map((item) => (
-//                             <motion.div
-//                                 key={`${item.id}-${item.size}`}
-//                                 className="bg-white rounded-lg p-4 shadow-sm"
-//                                 initial={{ opacity: 0, y: 20 }}
-//                                 animate={{ opacity: 1, y: 0 }}
-//                             >
-//                                 <div className="flex space-x-4">
-//                                     <img
-//                                         src={item.image || "/placeholder.svg"}
-//                                         alt={item.name}
-//                                         className="w-24 h-24 object-cover rounded-lg"
-//                                     />
-//                                     <div className="flex-1">
-//                                         <h3 className="font-medium text-lg">{item.product?.brand || "Brand"}</h3>
-//                                         <p className="text-gray-600 text-sm mb-2">{item.name}</p>
-//                                         <p className="text-sm text-gray-500 mb-2">Size: {item.size}</p>
-//                                         <div className="flex items-center justify-between">
-//                                             <div className="flex items-center space-x-3">
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty - 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Minus className="w-4 h-4" />
-//                                                 </button>
-//                                                 <span className="font-medium">{item.qty}</span>
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty + 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Plus className="w-4 h-4" />
-//                                                 </button>
-//                                             </div>
-//                                             <div className="text-right">
-//                                                 <p className="font-bold text-lg">₹{item.price * item.qty}</p>
-//                                                 <button
-//                                                     onClick={() => removeFromCart(item._id)}
-//                                                     className="text-red-500 hover:text-red-700 flex items-center text-sm mt-1"
-//                                                 >
-//                                                     <Trash2 className="w-4 h-4 mr-1" />
-//                                                     Remove
-//                                                 </button>
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             </motion.div>
-//                         ))}
-//                     </div>
-
-//                     {/* Order Summary */}
-//                     <div className="lg:col-span-1">
-//                         <div className="bg-white rounded-lg p-6 shadow-sm sticky top-4">
-//                             <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-
-//                             <div className="space-y-3 mb-4">
-//                                 <div className="flex justify-between">
-//                                     <span>Subtotal ({cart.cartItems.reduce((total, item) => total + item.qty, 0)} items)</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Shipping</span>
-//                                     <span className="text-green-600">FREE</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Discount</span>
-//                                     <span className="text-green-600">-₹0</span>
-//                                 </div>
-//                                 <hr />
-//                                 <div className="flex justify-between font-bold text-lg">
-//                                     <span>Total</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                             </div>
-
-//                             <button
-//                                 onClick={handleCheckout}
-//                                 className="w-full bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600 transition-colors"
-//                             >
-//                                 {isAuthenticated ? "PROCEED TO CHECKOUT" : "LOGIN TO CHECKOUT"}
-//                             </button>
-
-//                             <div className="mt-4 text-center">
-//                                 <Link to="/" className="text-pink-500 hover:underline text-sm">
-//                                     Continue Shopping
-//                                 </Link>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default Cart
-
-
-// import { motion } from "framer-motion"
-// import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
-// import { useApp } from "../context/AppContext"
-// import { Link, useNavigate } from "react-router-dom"
-
-// const Cart = () => {
-//     const { cart, isAuthenticated } = useApp()
-//     const navigate = useNavigate()
-
-//     const handleQuantityChange = async (cartItemId, newQuantity) => {
-//         if (newQuantity === 0) {
-//             await cart.removeFromCart(cartItemId)
-//         } else {
-//             await cart.updateCartItem(cartItemId, newQuantity)
-//         }
-//     }
-
-//     const handleCheckout = () => {
-//         if (!isAuthenticated) {
-//             navigate("/login?redirect=checkout")
-//         } else {
-//             navigate("/checkout")
-//         }
-//     }
-
-//     if (cart.loading) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <div className="spinner mx-auto mb-4"></div>
-//                     <p>Loading cart...</p>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     if (cart.cartItems.length === 0) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-//                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Your bag is empty</h2>
-//                     <p className="text-gray-600 mb-6">Add some products to get started</p>
-//                     <Link to="/" className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
-//                         Continue Shopping
-//                     </Link>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     return (
-//         <div className="min-h-screen bg-gray-50">
-//             <div className="container mx-auto px-4 py-8">
-//                 <h1 className="text-2xl font-bold mb-8">Shopping Bag ({cart.cartItems.length} items)</h1>
-
-//                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-//                     {/* Cart Items */}
-//                     <div className="lg:col-span-2 space-y-4">
-//                         {cart.cartItems.map((item) => (
-//                             <motion.div
-//                                 key={item._id}
-//                                 className="bg-white rounded-lg p-4 shadow-sm"
-//                                 initial={{ opacity: 0, y: 20 }}
-//                                 animate={{ opacity: 1, y: 0 }}
-//                             >
-//                                 <div className="flex space-x-4">
-//                                     <img
-//                                         src={item.image || "/placeholder.svg"}
-//                                         alt={item.name}
-//                                         className="w-24 h-24 object-cover rounded-lg"
-//                                     />
-//                                     <div className="flex-1">
-//                                         <h3 className="font-medium text-lg">{item.product?.brand || "Brand"}</h3>
-//                                         <p className="text-gray-600 text-sm mb-2">{item.name}</p>
-//                                         <p className="text-sm text-gray-500 mb-2">Size: {item.size}</p>
-//                                         <div className="flex items-center justify-between">
-//                                             <div className="flex items-center space-x-3">
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty - 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Minus className="w-4 h-4" />
-//                                                 </button>
-//                                                 <span className="font-medium">{item.qty}</span>
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty + 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Plus className="w-4 h-4" />
-//                                                 </button>
-//                                             </div>
-//                                             <div className="text-right">
-//                                                 <p className="font-bold text-lg">₹{item.price * item.qty}</p>
-//                                                 <button
-//                                                     onClick={() => cart.removeFromCart(item._id)}
-//                                                     className="text-red-500 hover:text-red-700 flex items-center text-sm mt-1"
-//                                                 >
-//                                                     <Trash2 className="w-4 h-4 mr-1" />
-//                                                     Remove
-//                                                 </button>
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             </motion.div>
-//                         ))}
-//                     </div>
-
-//                     {/* Order Summary */}
-//                     <div className="lg:col-span-1">
-//                         <div className="bg-white rounded-lg p-6 shadow-sm sticky top-4">
-//                             <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-
-//                             <div className="space-y-3 mb-4">
-//                                 <div className="flex justify-between">
-//                                     <span>Subtotal ({cart.cartItems.reduce((total, item) => total + item.qty, 0)} items)</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Shipping</span>
-//                                     <span className="text-green-600">FREE</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Discount</span>
-//                                     <span className="text-green-600">-₹0</span>
-//                                 </div>
-//                                 <hr />
-//                                 <div className="flex justify-between font-bold text-lg">
-//                                     <span>Total</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                             </div>
-
-//                             <button
-//                                 onClick={handleCheckout}
-//                                 className="w-full bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600 transition-colors"
-//                             >
-//                                 {isAuthenticated ? "PROCEED TO CHECKOUT" : "LOGIN TO CHECKOUT"}
-//                             </button>
-
-//                             <div className="mt-4 text-center">
-//                                 <Link to="/" className="text-pink-500 hover:underline text-sm">
-//                                     Continue Shopping
-//                                 </Link>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default Cart
-
-
-
-
-// import { motion } from "framer-motion"
-// import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
-// import { useApp } from "../context/AppContext"
-// import { Link, useNavigate } from "react-router-dom"
-
-// const Cart = () => {
-//     const { cart, isAuthenticated } = useApp()
-
-//     const navigate = useNavigate()
-
-//     const handleQuantityChange = async (cartItemId, newQuantity) => {
-//         if (newQuantity === 0) {
-//             await cart.removeFromCart(cartItemId)
-//         } else {
-//             await cart.updateCartItem(cartItemId, newQuantity)
-//         }
-//     }
-
-//     const handleCheckout = () => {
-//         if (!isAuthenticated) {
-//             navigate("/login?redirect=checkout")
-//         } else {
-//             navigate("/checkout")
-//         }
-//     }
-
-//     if (cart?.loading) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <div className="spinner mx-auto mb-4"></div>
-//                     <p>Loading cart...</p>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     const cartItems = cart?.cartItems || []
-
-//     if (cartItems.length === 0) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-//                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Your bag is empty</h2>
-//                     <p className="text-gray-600 mb-6">Add some products to get started</p>
-//                     <Link to="/" className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
-//                         Continue Shopping
-//                     </Link>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     return (
-//         <div className="min-h-screen bg-gray-50">
-//             <div className="container mx-auto px-4 py-8">
-//                 <h1 className="text-2xl font-bold mb-8">Shopping Bag ({cartItems.length} items)</h1>
-
-//                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-//                     {/* Cart Items */}
-//                     <div className="lg:col-span-2 space-y-4">
-//                         {cartItems.map((item) => (
-//                             <motion.div
-//                                 key={item._id}
-//                                 className="bg-white rounded-lg p-4 shadow-sm"
-//                                 initial={{ opacity: 0, y: 20 }}
-//                                 animate={{ opacity: 1, y: 0 }}
-//                             >
-//                                 <div className="flex space-x-4">
-//                                     <img
-//                                         src={item.image || "/placeholder.svg"}
-//                                         alt={item.name}
-//                                         className="w-24 h-24 object-cover rounded-lg"
-//                                     />
-//                                     <div className="flex-1">
-//                                         <h3 className="font-medium text-lg">{item.product?.brand || "Brand"}</h3>
-//                                         <p className="text-gray-600 text-sm mb-2">{item.name}</p>
-//                                         <p className="text-sm text-gray-500 mb-2">Size: {item.size}</p>
-//                                         <div className="flex items-center justify-between">
-//                                             <div className="flex items-center space-x-3">
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty - 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Minus className="w-4 h-4" />
-//                                                 </button>
-//                                                 <span className="font-medium">{item.qty}</span>
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty + 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Plus className="w-4 h-4" />
-//                                                 </button>
-//                                             </div>
-//                                             <div className="text-right">
-//                                                 <p className="font-bold text-lg">₹{item.price * item.qty}</p>
-//                                                 <button
-//                                                     onClick={() => cart.removeFromCart(item._id)}
-//                                                     className="text-red-500 hover:text-red-700 flex items-center text-sm mt-1"
-//                                                 >
-//                                                     <Trash2 className="w-4 h-4 mr-1" />
-//                                                     Remove
-//                                                 </button>
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             </motion.div>
-//                         ))}
-//                     </div>
-
-//                     {/* Order Summary */}
-//                     <div className="lg:col-span-1">
-//                         <div className="bg-white rounded-lg p-6 shadow-sm sticky top-4">
-//                             <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-
-//                             <div className="space-y-3 mb-4">
-//                                 <div className="flex justify-between">
-//                                     <span>Subtotal ({cartItems.reduce((total, item) => total + item.qty, 0)} items)</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Shipping</span>
-//                                     <span className="text-green-600">FREE</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Discount</span>
-//                                     <span className="text-green-600">-₹0</span>
-//                                 </div>
-//                                 <hr />
-//                                 <div className="flex justify-between font-bold text-lg">
-//                                     <span>Total</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                             </div>
-
-//                             <button
-//                                 onClick={handleCheckout}
-//                                 className="w-full bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600 transition-colors"
-//                             >
-//                                 {isAuthenticated ? "PROCEED TO CHECKOUT" : "LOGIN TO CHECKOUT"}
-//                             </button>
-
-//                             <div className="mt-4 text-center">
-//                                 <Link to="/" className="text-pink-500 hover:underline text-sm">
-//                                     Continue Shopping
-//                                 </Link>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default Cart
-
-
-
-// import { motion } from "framer-motion"
-// import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
-// import { useApp } from "../context/AppContext"
-// import { Link, useNavigate } from "react-router-dom"
-
-// const Cart = () => {
-//     const { cart, isAuthenticated } = useApp()
-//     const navigate = useNavigate()
-
-//     const handleQuantityChange = async (cartItemId, newQuantity) => {
-//         if (newQuantity === 0) {
-//             await cart.removeFromCart(cartItemId)
-//         } else {
-//             await cart.updateCartItem(cartItemId, newQuantity)
-//         }
-//     }
-
-//     const handleCheckout = () => {
-//         if (!isAuthenticated) {
-//             navigate("/login?redirect=checkout")
-//         } else {
-//             navigate("/checkout")
-//         }
-//     }
-
-//     if (cart.loading) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <div className="spinner mx-auto mb-4"></div>
-//                     <p>Loading cart...</p>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     if (cart.cartItems.length === 0) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-//                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Your bag is empty</h2>
-//                     <p className="text-gray-600 mb-6">Add some products to get started</p>
-//                     <Link to="/" className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
-//                         Continue Shopping
-//                     </Link>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     return (
-//         <div className="min-h-screen bg-gray-50">
-//             <div className="container mx-auto px-4 py-8">
-//                 <h1 className="text-2xl font-bold mb-8">Shopping Bag ({cart.cartItems.length} items)</h1>
-
-//                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-//                     {/* Cart Items */}
-//                     <div className="lg:col-span-2 space-y-4">
-//                         {cart.cartItems.map((item) => (
-//                             <motion.div
-//                                 key={item._id}
-//                                 className="bg-white rounded-lg p-4 shadow-sm"
-//                                 initial={{ opacity: 0, y: 20 }}
-//                                 animate={{ opacity: 1, y: 0 }}
-//                             >
-//                                 <div className="flex space-x-4">
-//                                     <img
-//                                         src={item.image || "/placeholder.svg"}
-//                                         alt={item.name}
-//                                         className="w-24 h-24 object-cover rounded-lg"
-//                                     />
-//                                     <div className="flex-1">
-//                                         <h3 className="font-medium text-lg">{item.product?.brand || "Brand"}</h3>
-//                                         <p className="text-gray-600 text-sm mb-2">{item.name}</p>
-//                                         <p className="text-sm text-gray-500 mb-2">Size: {item.size}</p>
-//                                         <div className="flex items-center justify-between">
-//                                             <div className="flex items-center space-x-3">
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty - 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Minus className="w-4 h-4" />
-//                                                 </button>
-//                                                 <span className="font-medium">{item.qty}</span>
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty + 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Plus className="w-4 h-4" />
-//                                                 </button>
-//                                             </div>
-//                                             <div className="text-right">
-//                                                 <p className="font-bold text-lg">₹{item.price * item.qty}</p>
-//                                                 <button
-//                                                     onClick={() => cart.removeFromCart(item._id)}
-//                                                     className="text-red-500 hover:text-red-700 flex items-center text-sm mt-1"
-//                                                 >
-//                                                     <Trash2 className="w-4 h-4 mr-1" />
-//                                                     Remove
-//                                                 </button>
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             </motion.div>
-//                         ))}
-//                     </div>
-
-//                     {/* Order Summary */}
-//                     <div className="lg:col-span-1">
-//                         <div className="bg-white rounded-lg p-6 shadow-sm sticky top-4">
-//                             <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-
-//                             <div className="space-y-3 mb-4">
-//                                 <div className="flex justify-between">
-//                                     <span>Subtotal ({cart.cartItems.reduce((total, item) => total + item.qty, 0)} items)</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Shipping</span>
-//                                     <span className="text-green-600">FREE</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Discount</span>
-//                                     <span className="text-green-600">-₹0</span>
-//                                 </div>
-//                                 <hr />
-//                                 <div className="flex justify-between font-bold text-lg">
-//                                     <span>Total</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                             </div>
-
-//                             <button
-//                                 onClick={handleCheckout}
-//                                 className="w-full bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600 transition-colors"
-//                             >
-//                                 {isAuthenticated ? "PROCEED TO CHECKOUT" : "LOGIN TO CHECKOUT"}
-//                             </button>
-
-//                             <div className="mt-4 text-center">
-//                                 <Link to="/" className="text-pink-500 hover:underline text-sm">
-//                                     Continue Shopping
-//                                 </Link>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default Cart
-
-
-// import { motion } from "framer-motion"
-// import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
-// import { useApp } from "../context/AppContext"
-// import { Link, useNavigate } from "react-router-dom"
-
-// const Cart = () => {
-//     const { cart, isAuthenticated } = useApp()
-//     const navigate = useNavigate()
-
-//     const handleQuantityChange = async (cartItemId, newQuantity) => {
-//         if (newQuantity === 0) {
-//             await cart.removeFromCart(cartItemId)
-//         } else {
-//             await cart.updateCartItem(cartItemId, newQuantity)
-//         }
-//     }
-
-//     const handleCheckout = () => {
-//         if (!isAuthenticated) {
-//             navigate("/login?redirect=checkout")
-//         } else {
-//             navigate("/checkout")
-//         }
-//     }
-
-//     if (cart.loading) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <div className="spinner mx-auto mb-4"></div>
-//                     <p>Loading cart...</p>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     if (cart.cartItems.length === 0) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-//                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Your bag is empty</h2>
-//                     <p className="text-gray-600 mb-6">Add some products to get started</p>
-//                     <Link to="/" className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
-//                         Continue Shopping
-//                     </Link>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     return (
-//         <div className="min-h-screen bg-gray-50">
-//             <div className="container mx-auto px-4 py-8">
-//                 <h1 className="text-2xl font-bold mb-8">Shopping Bag ({cart.cartItems.length} items)</h1>
-
-//                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-//                     {/* Cart Items */}
-//                     <div className="lg:col-span-2 space-y-4">
-//                         {cart.cartItems.map((item) => (
-//                             <motion.div
-//                                 key={item._id}
-//                                 className="bg-white rounded-lg p-4 shadow-sm"
-//                                 initial={{ opacity: 0, y: 20 }}
-//                                 animate={{ opacity: 1, y: 0 }}
-//                             >
-//                                 <div className="flex space-x-4">
-//                                     <img
-//                                         src={item.image || "/placeholder.svg"}
-//                                         alt={item.name}
-//                                         className="w-24 h-24 object-cover rounded-lg"
-//                                     />
-//                                     <div className="flex-1">
-//                                         <h3 className="font-medium text-lg">{item.product?.brand || "Brand"}</h3>
-//                                         <p className="text-gray-600 text-sm mb-2">{item.name}</p>
-//                                         <p className="text-sm text-gray-500 mb-2">Size: {item.size}</p>
-//                                         <div className="flex items-center justify-between">
-//                                             <div className="flex items-center space-x-3">
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty - 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Minus className="w-4 h-4" />
-//                                                 </button>
-//                                                 <span className="font-medium">{item.qty}</span>
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty + 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Plus className="w-4 h-4" />
-//                                                 </button>
-//                                             </div>
-//                                             <div className="text-right">
-//                                                 <p className="font-bold text-lg">₹{item.price * item.qty}</p>
-//                                                 <button
-//                                                     onClick={() => cart.removeFromCart(item._id)}
-//                                                     className="text-red-500 hover:text-red-700 flex items-center text-sm mt-1"
-//                                                 >
-//                                                     <Trash2 className="w-4 h-4 mr-1" />
-//                                                     Remove
-//                                                 </button>
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             </motion.div>
-//                         ))}
-//                     </div>
-
-//                     {/* Order Summary */}
-//                     <div className="lg:col-span-1">
-//                         <div className="bg-white rounded-lg p-6 shadow-sm sticky top-4">
-//                             <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-
-//                             <div className="space-y-3 mb-4">
-//                                 <div className="flex justify-between">
-//                                     <span>Subtotal ({cart.cartItems.reduce((total, item) => total + item.qty, 0)} items)</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Shipping</span>
-//                                     <span className="text-green-600">FREE</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Discount</span>
-//                                     <span className="text-green-600">-₹0</span>
-//                                 </div>
-//                                 <hr />
-//                                 <div className="flex justify-between font-bold text-lg">
-//                                     <span>Total</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                             </div>
-
-//                             <button
-//                                 onClick={handleCheckout}
-//                                 className="w-full bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600 transition-colors"
-//                             >
-//                                 {isAuthenticated ? "PROCEED TO CHECKOUT" : "LOGIN TO CHECKOUT"}
-//                             </button>
-
-//                             <div className="mt-4 text-center">
-//                                 <Link to="/" className="text-pink-500 hover:underline text-sm">
-//                                     Continue Shopping
-//                                 </Link>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default Cart
-
-
-// import { motion } from "framer-motion"
-// import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
-// import { useApp } from "../context/AppContext"
-// import { Link, useNavigate } from "react-router-dom"
-
-// const Cart = () => {
-//     const { cart, isAuthenticated } = useApp()
-//     const navigate = useNavigate()
-
-//     const handleQuantityChange = async (cartItemId, newQuantity) => {
-//         if (newQuantity === 0) {
-//             await cart.removeFromCart(cartItemId)
-//         } else {
-//             await cart.updateQuantity(cartItemId, newQuantity)
-//         }
-//     }
-
-//     const handleCheckout = () => {
-//         if (!isAuthenticated) {
-//             navigate("/login?redirect=checkout")
-//         } else {
-//             navigate("/checkout")
-//         }
-//     }
-
-//     if (cart.loading) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <div className="spinner mx-auto mb-4"></div>
-//                     <p>Loading cart...</p>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     if (!cart || !Array.isArray(cart.items) || cart.items.length === 0) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-//                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Your bag is empty</h2>
-//                     <p className="text-gray-600 mb-6">Add some products to get started</p>
-//                     <Link to="/" className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
-//                         Continue Shopping
-//                     </Link>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     return (
-//         <div className="min-h-screen bg-gray-50">
-//             <div className="container mx-auto px-4 py-8">
-//                 <h1 className="text-2xl font-bold mb-8">Shopping Bag ({cart.items.length} items)</h1>
-
-//                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-//                     {/* Cart Items */}
-//                     <div className="lg:col-span-2 space-y-4">
-//                         {cart.items.map((item) => (
-//                             <motion.div
-//                                 key={item._id}
-//                                 className="bg-white rounded-lg p-4 shadow-sm"
-//                                 initial={{ opacity: 0, y: 20 }}
-//                                 animate={{ opacity: 1, y: 0 }}
-//                             >
-//                                 <div className="flex space-x-4">
-//                                     <img src={item.image || item.product?.image || "/placeholder.svg"}
-
-//                                         alt={item.product.name}
-//                                         className="w-24 h-24 object-cover rounded-lg"
-//                                     />
-//                                     <div className="flex-1">
-//                                         <h3 className="font-medium text-lg">{item.product.brand}</h3>
-//                                         <p className="text-gray-600 text-sm mb-2">{item.product.name}</p>
-//                                         <p className="text-sm text-gray-500 mb-2">Size: {item.size}</p>
-//                                         <div className="flex items-center justify-between">
-//                                             <div className="flex items-center space-x-3">
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty - 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Minus className="w-4 h-4" />
-//                                                 </button>
-//                                                 <span className="font-medium">{item.qty}</span>
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty + 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Plus className="w-4 h-4" />
-//                                                 </button>
-//                                             </div>
-//                                             <div className="text-right">
-//                                                 <p className="font-bold text-lg">₹{item.product.price * item.qty}</p>
-//                                                 <button
-//                                                     onClick={() => cart.removeFromCart(item._id)}
-//                                                     className="text-red-500 hover:text-red-700 flex items-center text-sm mt-1"
-//                                                 >
-//                                                     <Trash2 className="w-4 h-4 mr-1" />
-//                                                     Remove
-//                                                 </button>
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             </motion.div>
-//                         ))}
-//                     </div>
-
-//                     {/* Order Summary */}
-//                     <div className="lg:col-span-1">
-//                         <div className="bg-white rounded-lg p-6 shadow-sm sticky top-4">
-//                             <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-
-//                             <div className="space-y-3 mb-4">
-//                                 <div className="flex justify-between">
-//                                     <span>Subtotal ({cart.getCartItemsCount()} items)</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Shipping</span>
-//                                     <span className="text-green-600">FREE</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Discount</span>
-//                                     <span className="text-green-600">-₹0</span>
-//                                 </div>
-//                                 <hr />
-//                                 <div className="flex justify-between font-bold text-lg">
-//                                     <span>Total</span>
-//                                     <span>₹{cart.getCartTotal()}</span>
-//                                 </div>
-//                             </div>
-
-//                             <button
-//                                 onClick={handleCheckout}
-//                                 className="w-full bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600 transition-colors"
-//                             >
-//                                 {isAuthenticated ? "PROCEED TO CHECKOUT" : "LOGIN TO CHECKOUT"}
-//                             </button>
-
-//                             <div className="mt-4 text-center">
-//                                 <Link to="/" className="text-pink-500 hover:underline text-sm">
-//                                     Continue Shopping
-//                                 </Link>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default Cart
-
-
-
-// import { motion } from "framer-motion"
-// import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
-// import { useApp } from "../context/AppContext"
-// import { Link, useNavigate } from "react-router-dom"
-
-// const Cart = () => {
-//     const {
-//         cart,
-//         isAuthenticated,
-//         updateCartItem,
-//         removeFromCart,
-//         getCartTotal,
-//         getCartItemsCount,
-//         cartLoading,
-//     } = useApp()
-//     const navigate = useNavigate()
-
-//     const handleQuantityChange = async (cartItemId, newQuantity) => {
-//         if (newQuantity === 0) {
-//             await removeFromCart(cartItemId)
-//         } else {
-//             await updateCartItem(cartItemId, newQuantity)
-//         }
-//     }
-
-//     const handleCheckout = () => {
-//         if (!isAuthenticated) {
-//             navigate("/login?redirect=checkout")
-//         } else {
-//             navigate("/checkout")
-//         }
-//     }
-
-//     if (cartLoading) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <div className="spinner mx-auto mb-4"></div>
-//                     <p>Loading cart...</p>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     if (!cart || !Array.isArray(cart.items) || cart.items.length === 0) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-//                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Your bag is empty</h2>
-//                     <p className="text-gray-600 mb-6">Add some products to get started</p>
-//                     <Link to="/" className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
-//                         Continue Shopping
-//                     </Link>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     return (
-//         <div className="min-h-screen bg-gray-50">
-//             <div className="container mx-auto px-4 py-8">
-//                 <h1 className="text-2xl font-bold mb-8">Shopping Bag ({cart.items.length} items)</h1>
-
-//                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-//                     {/* Cart Items */}
-//                     <div className="lg:col-span-2 space-y-4">
-//                         {cart.items.map((item) => {
-//                             <motion.div
-//                                 key={item._id}
-//                                 className="bg-white rounded-lg p-4 shadow-sm"
-//                                 initial={{ opacity: 0, y: 20 }}
-//                                 animate={{ opacity: 1, y: 0 }}
-//                             >
-//                                 <div className="flex space-x-4">
-//                                     <img
-//                                         src={item.image || item.product?.image || "/placeholder.svg"}
-//                                         alt={item.product?.name || item.name || "Product"}
-//                                         className="w-24 h-24 object-cover rounded-lg"
-//                                     />
-//                                     <div className="flex-1">
-//                                         <h3 className="font-medium text-lg">{item.product?.brand || item.brand}</h3>
-//                                         <p className="text-gray-600 text-sm mb-2">{item.product?.name || item.name}</p>
-//                                         <p className="text-sm text-gray-500 mb-2">Size: {item.size}</p>
-//                                         <div className="flex items-center justify-between">
-//                                             <div className="flex items-center space-x-3">
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty - 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Minus className="w-4 h-4" />
-//                                                 </button>
-//                                                 <span className="font-medium">{item.qty}</span>
-//                                                 <button
-//                                                     onClick={() => handleQuantityChange(item._id, item.qty + 1)}
-//                                                     className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-//                                                 >
-//                                                     <Plus className="w-4 h-4" />
-//                                                 </button>
-//                                             </div>
-//                                             <div className="text-right">
-//                                                 <p className="font-bold text-lg">₹{item.product?.price * item.qty}</p>
-//                                                 <button
-//                                                     onClick={() => removeFromCart(item._id)}
-//                                                     className="text-red-500 hover:text-red-700 flex items-center text-sm mt-1"
-//                                                 >
-//                                                     <Trash2 className="w-4 h-4 mr-1" />
-//                                                     Remove
-//                                                 </button>
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-
-//                             </motion.div>
-
-//                         })}
-//                     </div>
-
-//                     {/* Order Summary */}
-//                     <div className="lg:col-span-1">
-//                         <div className="bg-white rounded-lg p-6 shadow-sm sticky top-4">
-//                             <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-
-//                             <div className="space-y-3 mb-4">
-//                                 <div className="flex justify-between">
-//                                     <span>Subtotal ({getCartItemsCount()} items)</span>
-//                                     <span>₹{getCartTotal()}</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Shipping</span>
-//                                     <span className="text-green-600">FREE</span>
-//                                 </div>
-//                                 <div className="flex justify-between">
-//                                     <span>Discount</span>
-//                                     <span className="text-green-600">-₹0</span>
-//                                 </div>
-//                                 <hr />
-//                                 <div className="flex justify-between font-bold text-lg">
-//                                     <span>Total</span>
-//                                     <span>₹{getCartTotal()}</span>
-//                                 </div>
-//                             </div>
-
-//                             <button
-//                                 onClick={handleCheckout}
-//                                 className="w-full bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600 transition-colors"
-//                             >
-//                                 {isAuthenticated ? "PROCEED TO CHECKOUT" : "LOGIN TO CHECKOUT"}
-//                             </button>
-
-//                             <div className="mt-4 text-center">
-//                                 <Link to="/" className="text-pink-500 hover:underline text-sm">
-//                                     Continue Shopping
-//                                 </Link>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default Cart
-
-
-
-import { motion } from "framer-motion"
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
-import { useCart } from "../context/CartContext"
+import { useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
-import { useAuth } from "../context/AuthContext"
+import { motion } from "framer-motion"
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react"
+import { fetchCart, updateCartItem, removeFromCart } from "../redux/slices/cartSlice"
+import toast from "react-hot-toast"
 
 const Cart = () => {
-    const {
-        items: cartItems,
-        updateCartItem,       // ✅ FIXED HERE
-        removeFromCart,
-        getCartItemsCount,
-        getTotalPrice,
-        loading: cartLoading,
-    } = useCart();
-
-    const { user: isAuthenticated } = useAuth();
-
+    const dispatch = useDispatch()
     const navigate = useNavigate()
 
-    const handleQuantityChange = async (ItemId, newQuantity) => {
-        if (newQuantity === 0) {
-            await removeFromCart(ItemId)
-        } else {
-            await updateCartItem(ItemId, newQuantity)
+    // Redux State
+    const { cartItems, loading } = useSelector((state) => state.cart)
+    const { user } = useSelector((state) => state.auth)
+
+    useEffect(() => {
+        if (user) {
+            dispatch(fetchCart())
         }
+    }, [dispatch, user])
+
+    // Quantity Handlers
+    const handleQtyChange = (id, currentQty, delta, stock) => {
+        const newQty = currentQty + delta
+        if (newQty > stock) {
+            toast.error("Exceeds available stock")
+            return
+        }
+        if (newQty < 1) return
+
+        dispatch(updateCartItem({ id, qty: newQty }))
     }
 
-    const handleCheckout = () => {
-        if (!isAuthenticated) {
-            navigate("/login?redirect=checkout")
-        } else {
-            navigate("/checkout")
-        }
-    }
+    // Totals Calculation (Memoized logic industry standard)
+    const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.qty), 0)
+    const shipping = subtotal > 1000 ? 0 : 99
+    const total = subtotal + shipping
 
-    if (cartLoading) {
+    if (loading && cartItems.length === 0) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="spinner mx-auto mb-4"></div>
-                    <p>Loading cart...</p>
-                </div>
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-pink-500"></div>
             </div>
         )
     }
 
-    if (!Array.isArray(cartItems) || cartItems.length === 0) {
-
-
+    if (!cartItems || cartItems.length === 0) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Your bag is empty</h2>
-                    <p className="text-gray-600 mb-6">Add some products to get started</p>
-                    <Link to="/" className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
-                        Continue Shopping
-                    </Link>
-                </div>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
+                <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
+                    <ShoppingBag size={80} className="text-gray-200 mb-4" />
+                </motion.div>
+                <h2 className="text-xl font-bold text-gray-800">Hey, it feels so light!</h2>
+                <p className="text-gray-500 mt-2 mb-6">There is nothing in your bag. Let's add some items.</p>
+                <Link to="/" className="border border-pink-500 text-pink-500 px-10 py-3 rounded font-bold hover:bg-pink-50 transition-all">
+                    ADD ITEMS FROM WISHLIST
+                </Link>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="container mx-auto px-4 py-8">
-                <h1 className="text-2xl font-bold mb-8">Shopping Bag ({cartItems.length} items)</h1>
+        <div className="min-h-screen bg-white py-10">
+            <div className="max-w-6xl mx-auto px-4">
+                <div className="flex flex-col lg:flex-row gap-10">
 
+                    {/* Left: Cart Items */}
+                    <div className="flex-1 space-y-4">
+                        <div className="flex justify-between items-center border-b pb-4">
+                            <h1 className="text-lg font-bold">Check Bag ({cartItems.length} Items)</h1>
+                        </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Cart Items */}
-                    <div className="lg:col-span-2 space-y-4">
                         {cartItems.map((item) => (
-
-
                             <motion.div
                                 key={item._id}
-                                className="bg-white rounded-lg p-4 shadow-sm"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
+                                layout
+                                className="flex gap-4 border p-4 rounded-md relative group"
                             >
+                                <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="w-24 h-32 object-cover bg-gray-50"
+                                />
 
-                                <div className="flex space-x-4">
-                                    <img
-                                        src={item.image || item.product?.image || "/placeholder.svg"}
-                                        alt={item.product?.name || item.name || "Product"}
-                                        className="w-24 h-24 object-cover rounded-lg"
-                                    />
-                                    <div className="flex-1">
-                                        <h3 className="font-medium text-lg">{item.product?.brand || item.brand}</h3>
-                                        <p className="text-gray-600 text-sm mb-2">{item.product?.name || item.name}</p>
-                                        <p className="text-sm text-gray-500 mb-2">Size: {item.size}</p>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-3">
-                                                <button
-                                                    onClick={() => handleQuantityChange(item._id, item.qty - 1)}
-                                                    className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-                                                >
-                                                    <Minus className="w-4 h-4" />
-                                                </button>
-                                                <span className="font-medium">{item.qty}</span>
-                                                <button
-                                                    onClick={() => handleQuantityChange(item._id, item.qty + 1)}
-                                                    className="w-8 h-8 border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50"
-                                                >
-                                                    <Plus className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                            <div className="text-right">
-                                                {/* <p className="font-bold text-lg">₹{item.product?.price * item.qty}</p> */}
-                                                <p className="font-medium text-gray-800">
-                                                    ₹{(Number(item.price || 0) * Number(item.qty || 1)).toFixed(2)}
-                                                </p>
+                                <div className="flex-1 space-y-1">
+                                    <h3 className="font-bold text-sm uppercase">{item.brand || 'Brand'}</h3>
+                                    <p className="text-gray-600 text-sm">{item.name}</p>
+                                    <p className="text-xs bg-gray-100 w-fit px-2 py-1 rounded mt-1">Size: {item.size}</p>
 
-                                                <button
-                                                    onClick={() => removeFromCart(item._id)}
-                                                    className="text-red-500 hover:text-red-700 flex items-center text-sm mt-1"
-                                                >
-                                                    <Trash2 className="w-4 h-4 mr-1" />
-                                                    Remove
-                                                </button>
-                                            </div>
+                                    <div className="flex items-center gap-4 mt-4">
+                                        <div className="flex items-center border rounded">
+                                            <button
+                                                onClick={() => handleQtyChange(item._id, item.qty, -1)}
+                                                className="p-1 hover:bg-gray-100"><Minus size={14} /></button>
+                                            <span className="px-3 text-sm font-bold">{item.qty}</span>
+                                            <button
+                                                onClick={() => handleQtyChange(item._id, item.qty, 1, 10)}
+                                                className="p-1 hover:bg-gray-100"><Plus size={14} /></button>
                                         </div>
+                                        <div className="font-bold text-sm">₹{item.price * item.qty}</div>
                                     </div>
                                 </div>
+
+                                <button
+                                    onClick={() => dispatch(removeFromCart(item._id))}
+                                    className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
                             </motion.div>
                         ))}
-
                     </div>
 
-                    {/* Order Summary */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-lg p-6 shadow-sm sticky top-4">
-                            <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+                    {/* Right: Price Details */}
+                    <div className="w-full lg:w-96">
+                        <div className="border p-6 rounded-md sticky top-24">
+                            <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Price Details ({cartItems.length} Items)</h2>
 
-                            <div className="space-y-3 mb-4">
+                            <div className="space-y-3 text-sm border-b pb-4">
                                 <div className="flex justify-between">
-                                    <span>Subtotal ({getCartItemsCount()} items)</span>
-                                    <span>₹{getTotalPrice()}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span>Shipping</span>
-                                    <span className="text-green-600">FREE</span>
+                                    <span>Total MRP</span>
+                                    <span>₹{subtotal}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span>Discount</span>
-                                    <span className="text-green-600">-₹0</span>
+                                    <span>Convenience Fee</span>
+                                    <span className={shipping === 0 ? "text-green-600" : ""}>
+                                        {shipping === 0 ? "FREE" : `₹${shipping}`}
+                                    </span>
                                 </div>
-                                <hr />
-                                <div className="flex justify-between font-bold text-lg">
-                                    <span>Total</span>
-                                    <span>₹{getTotalPrice()}</span>
-                                </div>
+                            </div>
+
+                            <div className="flex justify-between font-bold text-base py-4">
+                                <span>Total Amount</span>
+                                <span>₹{total}</span>
                             </div>
 
                             <button
-                                onClick={handleCheckout}
-                                className="w-full bg-pink-500 text-white py-3 rounded-lg font-medium hover:bg-pink-600 transition-colors"
+                                onClick={() => navigate('/checkout')}
+                                className="w-full bg-pink-500 text-white py-3 rounded font-bold flex items-center justify-center gap-2 hover:bg-pink-600 transition-all uppercase tracking-tight"
                             >
-                                {isAuthenticated ? "PROCEED TO CHECKOUT" : "LOGIN TO CHECKOUT"}
+                                Place Order <ArrowRight size={18} />
                             </button>
-
-                            <div className="mt-4 text-center">
-                                <Link to="/" className="text-pink-500 hover:underline text-sm">
-                                    Continue Shopping
-                                </Link>
-                            </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -1293,5 +151,4 @@ const Cart = () => {
 }
 
 export default Cart
-
 

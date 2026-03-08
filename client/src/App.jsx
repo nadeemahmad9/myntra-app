@@ -1,68 +1,7 @@
-// import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-// import Header from "./components/Header"
-// import Home from "./pages/Home"
-// import Footer from "./components/Footer"
-// import "./App.css"
-// import Men from "./pages/Men"
-// import Women from "./pages/Women"
-// import ProductListing from "./pages/ProductListing"
-// import ProductDetail from "./pages/ProductDetail"
-// import Cart from "./pages/Cart"
-// import Beauty from "./pages/Beauty"
-// import Kids from "./pages/Kids"
-// import Wishlist from "./pages/Wishlist"
-// // import { AuthProvider } from "./context/AuthContext"
-// // import { CartProvider } from "./context/CartContext"
-// // import { WishlistProvider } from "./context/WishlistContext"
-// import HomeCategory from "./pages/HomeCategory"
-// import SubcategoryListing from "./pages/SubCategoryListing"
-// import Checkout from "./pages/Checkout"
-// import Register from "./pages/Register"
-// import Login from "./pages/Login"
-// import Profile from "./pages/Profile"
-// import { AppProvider } from "./context/AppContext"
-
-// function App() {
-//   return (
-//     <AppProvider>
-
-
-//       <div className="App">
-//         <Header />
-//         <Routes>
-//           <Route path="/" element={<Home />} />
-//           <Route path="/men" element={<Men />} />
-//           <Route path="/women" element={<Women />} />
-//           <Route path="/kids" element={<Kids />} />
-//           <Route path="/home" element={<HomeCategory />} />
-//           <Route path="/beauty" element={<Beauty />} />
-//           {/* <Route path="/genz" element={<Genz />} /> */}
-//           <Route path="/products/:category" element={<ProductListing />} />
-//           <Route path="/products/subcategory/:subcategory" element={<SubcategoryListing />} />
-//           <Route path="/products/search" element={<ProductListing />} />
-
-//           <Route path="/product/:id" element={<ProductDetail />} />
-//           <Route path="/cart" element={<Cart />} />
-//           <Route path="/login" element={<Login />} />
-//           <Route path="/register" element={<Register />} />
-//           <Route path="/wishlist" element={<Wishlist />} />
-//           <Route path="/checkout" element={<Checkout />} />
-//           <Route path="/profile" element={<Profile />} />
-//         </Routes>
-//         <Footer />
-//       </div>
-
-
-//     </AppProvider>
-//   )
-// }
-
-// export default App
-
-
 import { Routes, Route } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
-import { AppProvider } from "./context/AppContext"
+import { useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
 
 // Components
 import Header from "./components/Header"
@@ -78,7 +17,10 @@ import Wishlist from "./pages/Wishlist"
 import Checkout from "./pages/Checkout"
 import Profile from "./pages/Profile"
 import ProductListing from "./pages/ProductListing"
-// import AdminDashboard from "./pages/Admin/AdminDashboard"
+import SubcategoryListing from "./pages/SubCategoryListing"
+import OrderSuccess from "./pages/OrderSuccess"
+import OrderDetails from "./pages/OrderDetails"
+import MyOrders from "./pages/myOrders"
 
 // Category Pages
 import Men from "./pages/Men"
@@ -86,63 +28,86 @@ import Women from "./pages/Women"
 import Kids from "./pages/Kids"
 import HomeCategory from "./pages/HomeCategory"
 import Beauty from "./pages/Beauty"
-// import Genz from "./pages/Genz"
+
+// Redux Actions (Taaki app load hote hi cart/user sync ho jaye)
+import { fetchCart } from "./redux/slices/cartSlice"
 
 import "./App.css"
-import SubcategoryListing from "./pages/SubCategoryListing"
-import { CartProvider } from "./context/CartContext"
+import ScrollToTop from "./components/ScrollToTop"
 
 function App() {
+  const dispatch = useDispatch()
+  const { isAuthenticated } = useSelector((state) => state.auth)
+
+  // ✅ App load hote hi Cart fetch karein agar user logged in hai
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchCart())
+    }
+  }, [isAuthenticated, dispatch])
+
   return (
-    <AppProvider>
+    <div className="App">
+      <ScrollToTop />
+      {/* ✅ No more CartProvider or AppProvider here */}
+      <Header />
 
-      <div className="App">
-        <CartProvider>
-          <Header />
-          <main>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/wishlist" element={<Wishlist />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/products" element={<ProductListing />} />
-              <Route path="/products/search" element={<ProductListing />} />
+      <main className="min-h-[80vh]">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/products" element={<ProductListing />} />
+          <Route path="/products/search" element={<ProductListing />} />
 
-              <Route path="/products/subcategory/:subcategory" element={<SubcategoryListing />} />
+          {/* Subcategory Route */}
+          <Route path="/products/subcategory/:subcategory" element={<SubcategoryListing />} />
 
-              <Route path="/men" element={<Men />} />
-              <Route path="/women" element={<Women />} />
-              <Route path="/kids" element={<Kids />} />
-              <Route path="/home" element={<HomeCategory />} />
-              <Route path="/beauty" element={<Beauty />} />
-              {/* <Route path="/products/genz" element={<Genz />} /> */}
-              {/* <Route path="/admin" element={<AdminDashboard />} /> */}
-            </Routes>
-          </main>
-        </CartProvider>
-        <Footer />
-        <Toaster
-          position="top-left"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: "#363636",
-              color: "#fff",
+          {/* Categories */}
+          <Route path="/men" element={<Men />} />
+          <Route path="/women" element={<Women />} />
+          <Route path="/kids" element={<Kids />} />
+          <Route path="/home" element={<HomeCategory />} />
+          <Route path="/beauty" element={<Beauty />} />
+
+          {/* Orders */}
+          <Route path="/orders/mine" element={<MyOrders />} />
+          <Route path="/order/:id" element={<OrderDetails />} />
+          <Route path="/order-success/:id" element={<OrderSuccess />} />
+        </Routes>
+      </main>
+
+      <Footer />
+
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#363636",
+            color: "#fff",
+            borderRadius: '8px',
+          },
+          success: {
+            iconTheme: {
+              primary: "#22c55e", // Myntra Pink
+              secondary: "#fff",
             },
-            success: {
-              duration: 3000,
-              theme: {
-                primary: "#4aed88",
-              },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ff4b4b', // Isse Red error icon aayega
+              secondary: '#fff',
             },
-          }}
-        />
-      </div>
-    </AppProvider>
+          },
+        }}
+      />
+    </div>
   )
 }
 

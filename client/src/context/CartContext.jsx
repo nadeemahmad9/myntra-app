@@ -317,7 +317,31 @@ const cartReducer = (state, action) => {
         //         }
         //     }
 
-        case "ADD_TO_CART":
+        // case "ADD_TO_CART":
+        //     const existingItem = state.items.find(
+        //         (item) =>
+        //             item.product._id === action.payload.product._id &&
+        //             item.size === action.payload.size
+        //     );
+
+        //     if (existingItem) {
+        //         return {
+        //             ...state,
+        //             items: state.items.map((i) =>
+        //                 i.product._id === existingItem.product._id && i.size === existingItem.size
+        //                     ? action.payload
+        //                     : i
+        //             ),
+        //         };
+        //     } else {
+        //         return {
+        //             ...state,
+        //             items: [...state.items, action.payload],
+        //         };
+        //     }
+
+
+        case "ADD_TO_CART": {
             const existingItem = state.items.find(
                 (item) =>
                     item.product._id === action.payload.product._id &&
@@ -325,20 +349,23 @@ const cartReducer = (state, action) => {
             );
 
             if (existingItem) {
+                // ✅ If item already exists → increase qty
                 return {
                     ...state,
                     items: state.items.map((i) =>
                         i.product._id === existingItem.product._id && i.size === existingItem.size
-                            ? action.payload
+                            ? { ...i, qty: i.qty + action.payload.qty }
                             : i
                     ),
                 };
             } else {
+                // ✅ If new item → just add
                 return {
                     ...state,
                     items: [...state.items, action.payload],
                 };
             }
+        }
 
 
         case 'UPDATE_ITEM':

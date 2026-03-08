@@ -85,25 +85,25 @@ export const AppProvider = ({ children }) => {
         }
     }, [state.isAuthenticated]);
 
-    const login = async (email, password) => {
-        try {
-            dispatch({ type: "SET_LOADING", payload: true });
-            const userData = await authService.login(email, password);
-            localStorage.setItem("user", JSON.stringify(userData));
-            dispatch({ type: "SET_USER", payload: userData });
+    // const login = async (email, password) => {
+    //     try {
+    //         dispatch({ type: "SET_LOADING", payload: true });
+    //         const userData = await authService.login(email, password);
+    //         localStorage.setItem("user", JSON.stringify(userData));
+    //         dispatch({ type: "SET_USER", payload: userData });
 
-            await cartService.syncGuestCartWithUser();
-            await fetchCart();
-            await fetchWishlist();
-            toast.success("Login successful!");
-            return userData;
-        } catch (error) {
-            toast.error(error.message || "Login failed");
-            throw error;
-        } finally {
-            dispatch({ type: "SET_LOADING", payload: false });
-        }
-    };
+    //         await cartService.syncGuestCartWithUser();
+    //         await fetchCart();
+    //         await fetchWishlist();
+    //         toast.success("Login successful!");
+    //         return userData;
+    //     } catch (error) {
+    //         toast.error(error.message || "Login failed");
+    //         throw error;
+    //     } finally {
+    //         dispatch({ type: "SET_LOADING", payload: false });
+    //     }
+    // };
 
 
 
@@ -135,6 +135,30 @@ export const AppProvider = ({ children }) => {
     //     }
     // }
 
+    const login = async (email, password) => {
+        try {
+            dispatch({ type: "SET_LOADING", payload: true });
+
+            // ✅ authService.login already stores token + user
+            const user = await authService.login(email, password);
+
+            // ✅ Just update state
+            dispatch({ type: "SET_USER", payload: user });
+
+            await cartService.syncGuestCartWithUser();
+            await fetchCart();
+            await fetchWishlist();
+
+            toast.success("Login successful!");
+            return user;
+        } catch (error) {
+            toast.error(error.message || "Login failed");
+            throw error;
+        } finally {
+            dispatch({ type: "SET_LOADING", payload: false });
+        }
+    };
+
 
 
 
@@ -162,6 +186,35 @@ export const AppProvider = ({ children }) => {
     //         console.error("Google login failed:", err);
     //     }
     // };
+
+
+    // const login = async (email, password) => {
+    //     try {
+    //         dispatch({ type: "SET_LOADING", payload: true });
+
+    //         const userData = await authService.login(email, password);
+
+    //         // ✅ Save both user + token
+    //         localStorage.setItem("user", JSON.stringify(userData));
+    //         if (userData.token) {
+    //             localStorage.setItem("token", userData.token);
+    //         }
+
+    //         dispatch({ type: "SET_USER", payload: userData });
+
+    //         await cartService.syncGuestCartWithUser();
+    //         await fetchCart();
+    //         await fetchWishlist();
+    //         toast.success("Login successful!");
+    //         return userData;
+    //     } catch (error) {
+    //         toast.error(error.message || "Login failed");
+    //         throw error;
+    //     } finally {
+    //         dispatch({ type: "SET_LOADING", payload: false });
+    //     }
+    // };
+
 
     const googleLogin = async (token) => {
         try {

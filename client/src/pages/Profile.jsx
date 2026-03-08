@@ -1,45 +1,182 @@
-
-
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { User, MapPin, Package, Heart, Settings, LogOut } from "lucide-react"
-import { useApp } from "../context/AppContext"
-import { orderService } from "../services/orderService"
-import { Link } from "react-router-dom"
-
-
+import { AnimatePresence, motion } from "framer-motion"
+import { User, MapPin, Package, Heart, Settings, LogOut, ChevronRight, X } from "lucide-react"
+import { useDispatch, useSelector } from "react-redux"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { logoutUser, setCredentials, updateAddresses } from "../redux/slices/authSlice"
+import api from "../utils/api"
+import toast from "react-hot-toast"
 
 const Profile = () => {
-    const { user, logout, isAuthenticated, wishlistItems } = useApp()
-    const [activeTab, setActiveTab] = useState("profile")
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+
+    // Redux State
+    const { user, isAuthenticated } = useSelector((state) => state.auth)
+
+    // Component States
+    const initialTab = searchParams.get("tab") || "profile"
+    const [activeTab, setActiveTab] = useState(initialTab)
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(false)
+    const [showModal, setShowModal] = useState(false)
+    const [isEditMode, setIsEditMode] = useState(false)
+    const [currentAddressId, setCurrentAddressId] = useState(null)
+    const [showProfileModal, setShowProfileModal] = useState(false);
 
-    useEffect(() => {
-        if (!isAuthenticated) {
-            return
+    const [profileForm, setProfileForm] = useState({
+        name: user?.name || "",
+        email: user?.email || "",
+        phone: user?.phone || "",
+    })
+
+    const [addressForm, setAddressForm] = useState({
+        name: "",
+        phone: "",
+        pincode: "",
+        address: "",
+        city: "",
+        state: "Uttar Pradesh",
+    })
+
+
+    // Profile Update karne ka function
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        try {
+            setLoading(true);
+            const { data } = await api.put("/users/profile", profileForm);
+
+            // ✅ Check karein ki backend ne success bheja hai
+            if (data.success) {
+                // 1. Redux Update (data.user bhej rahe hain kyunki aapka response wahi hai)
+                dispatch(setCredentials(data.user));
+
+                // 2. Token update (Kyunki backend naya token bhej raha hai)
+                localStorage.setItem("token", data.token);
+
+                toast.success("Profile updated successfully!");
+                setShowProfileModal(false);
+            }
+        } catch (error) {
+            // Agar yahan error aa rahi hai toh console check karein
+            console.error("Frontend Logic Error:", error);
+            toast.error(error.response?.data?.message || "Something went wrong while updating UI");
+        } finally {
+            setLoading(false);
         }
+    };
 
-        if (activeTab === "orders") {
+    // 🗑️ Delete Address
+    const handleDeleteAddress = async (id) => {
+        if (window.confirm("Are you sure you want to delete this address?")) {
+            try {
+                const { data } = await api.delete(`/users/address/${id}`)
+                if (data.success) {
+                    dispatch(updateAddresses(data.addresses))
+                    toast.success("Address removed")
+                }
+            } catch (error) {
+                toast.error("Failed to delete address")
+            }
+        }
+    }
+
+    // ✏️ Open Edit Modal
+    const openEditModal = (addr) => {
+        setIsEditMode(true)
+        setCurrentAddressId(addr._id)
+        setAddressForm({
+            name: addr.name,
+            phone: addr.phone,
+            pincode: addr.pincode,
+            address: addr.address,
+            city: addr.city,
+            state: addr.state,
+        })
+        setShowModal(true)
+    }
+
+    // ➕ Open Add Modal
+    const openAddModal = () => {
+        setIsEditMode(false)
+        setCurrentAddressId(null)
+        setAddressForm({
+            name: user?.name || "",
+            phone: "",
+            pincode: "",
+            address: "",
+            city: "",
+            state: "Uttar Pradesh",
+        })
+        setShowModal(true)
+    }
+
+    // ✅ Address Save/Update Logic
+    const handleSaveAddress = async (e) => {
+        e.preventDefault()
+        try {
+            setLoading(true)
+            let response
+
+            if (isEditMode) {
+                // Update API Call
+                response = await api.put(`/users/address/${currentAddressId}`, addressForm)
+            } else {
+                // Add API Call
+                response = await api.post("/users/address", addressForm)
+            }
+
+            if (response.data.success) {
+                dispatch(updateAddresses(response.data.addresses))
+                toast.success(isEditMode ? "Address updated successfully!" : "Address added successfully!")
+                setShowModal(false)
+                // Form Reset is handled in openAddModal/openEditModal but clean here too
+                setAddressForm({ name: "", phone: "", pincode: "", address: "", city: "", state: "Uttar Pradesh" })
+            }
+        } catch (error) {
+            const errorMsg = error.response?.data?.message || "Failed to process request"
+            toast.error(errorMsg)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Sync tabs
+    useEffect(() => {
+        const urlTab = searchParams.get("tab")
+        if (urlTab) setActiveTab(urlTab)
+    }, [searchParams])
+
+    // Fetch Orders
+    useEffect(() => {
+        if (isAuthenticated && activeTab === "orders") {
+            const fetchOrders = async () => {
+                try {
+                    setLoading(true)
+                    const { data } = await api.get("/orders/mine")
+                    setOrders(data.orders || data)
+                } catch (error) {
+                    console.error("Error fetching orders", error)
+                } finally {
+                    setLoading(false)
+                }
+            }
             fetchOrders()
         }
     }, [activeTab, isAuthenticated])
 
-
-
-
-
-
-    const fetchOrders = async () => {
-        try {
-            const response = await orderService.getMyOrders()
-            console.log("Fetched orders:", response)
-            setOrders(response.data || [])  // ✅ this line is important
-        } catch (error) {
-            console.error("Error fetching orders", error)
-        }
+    const handleTabChange = (tabId) => {
+        setActiveTab(tabId)
+        navigate(`/profile?tab=${tabId}`)
     }
 
+    const handleLogout = () => {
+        dispatch(logoutUser())
+        toast.success("Logged out successfully")
+        navigate("/")
+    }
 
     const tabs = [
         { id: "profile", label: "Profile", icon: User },
@@ -51,753 +188,297 @@ const Profile = () => {
 
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <User className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Please login to view your profile</h2>
-                    <Link to="/login" className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
-                        Login
-                    </Link>
+            <div className="min-h-[70vh] flex flex-col items-center justify-center p-4">
+                <div className="bg-pink-50 p-6 rounded-full mb-4">
+                    <User size={60} className="text-pink-500" />
                 </div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Please login to view profile</h2>
+                <Link to="/login" className="bg-pink-500 text-white px-8 py-2.5 rounded shadow-lg font-bold">LOGIN</Link>
             </div>
         )
     }
 
-
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="container mx-auto px-4 py-8">
+        <div className="min-h-screen bg-gray-50 py-10">
+            <div className="max-w-6xl mx-auto px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     {/* Sidebar */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <div className="text-center mb-6">
-                                {/* <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <User className="w-10 h-10 text-pink-500" />
-                                </div> */}
-
+                    <div className="lg:col-span-1 space-y-4">
+                        <div className="bg-white p-6 rounded shadow-sm border border-gray-100">
+                            <div className="flex flex-col items-center mb-8 pb-6 border-b border-gray-50">
                                 {user?.profilePic ? (
-                                    <img
-                                        src={user.profilePic}
-                                        alt={user.name}
-                                        className="w-20 h-20 rounded-full object-cover mx-auto mb-3"
-                                    />
+                                    <img src={user.profilePic} className="w-20 h-20 rounded-full object-cover border-2 border-pink-100 mb-3" alt="Profile" />
                                 ) : (
-                                    <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <User className="w-10 h-10 text-pink-500" />
+                                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                                        <User size={40} className="text-gray-400" />
                                     </div>
                                 )}
-
-                                <h2 className="text-xl font-semibold">{user?.name}</h2>
-                                <p className="text-gray-600 text-sm">{user?.email}</p>
+                                <h3 className="font-bold text-gray-800 uppercase tracking-tight">{user?.name}</h3>
+                                <p className="text-xs text-gray-500">{user?.email}</p>
                             </div>
-
-                            <nav className="space-y-2">
-                                {tabs.map((tab) => {
-                                    const Icon = tab.icon
-                                    return (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setActiveTab(tab.id)}
-                                            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${activeTab === tab.id
-                                                ? "bg-pink-50 text-pink-600 border-r-2 border-pink-500"
-                                                : "text-gray-600 hover:bg-gray-50"
-                                                }`}
-                                        >
-                                            <Icon className="w-5 h-5" />
-                                            <span>{tab.label}</span>
-                                        </button>
-                                    )
-                                })}
-                                <button
-                                    onClick={logout}
-                                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left text-red-600 hover:bg-red-50 transition-colors"
-                                >
-                                    <LogOut className="w-5 h-5" />
-                                    <span>Logout</span>
+                            <nav className="space-y-1">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => handleTabChange(tab.id)}
+                                        className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded transition-all ${activeTab === tab.id ? "bg-pink-50 text-pink-500" : "text-gray-600 hover:bg-gray-50"}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <tab.icon size={18} /> {tab.label}
+                                        </div>
+                                        {activeTab === tab.id && <ChevronRight size={14} />}
+                                    </button>
+                                ))}
+                                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded mt-4">
+                                    <LogOut size={18} /> Logout
                                 </button>
                             </nav>
                         </div>
                     </div>
 
-                    {/* Main Content */}
+                    {/* Content Area */}
                     <div className="lg:col-span-3">
-                        <div className="bg-white rounded-lg shadow-sm p-6">
+                        <div className="bg-white p-8 rounded shadow-sm border border-gray-100 min-h-[500px]">
                             {activeTab === "profile" && (
-                                <div>
-                                    <h2 className="text-2xl font-bold mb-6">Profile Information</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                                            <input
-                                                type="text"
-                                                value={user?.name || ""}
-                                                readOnly
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                                            />
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                    <h2 className="text-xl font-bold border-b pb-4 mb-6">Profile Details</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-bold text-gray-400 uppercase">Full Name</p>
+                                            <p className="text-gray-800 font-medium">{user?.name}</p>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                            <input
-                                                type="email"
-                                                value={user?.email || ""}
-                                                readOnly
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                                            />
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-bold text-gray-400 uppercase">Email Address</p>
+                                            <p className="text-gray-800 font-medium">{user?.email}</p>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                                            <input
-                                                type="tel"
-                                                value={user?.phone || ""}
-                                                readOnly
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Member Since</label>
-                                            <input
-                                                type="text"
-                                                value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
-                                                readOnly
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                                            />
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-bold text-gray-400 uppercase">Mobile Number</p>
+                                            <p className="text-gray-800 font-medium">{user?.phone || "Not provided"}</p>
                                         </div>
                                     </div>
-                                </div>
+                                    <button
+                                        onClick={() => {
+                                            setProfileForm({ name: user.name, email: user.email, phone: user.phone || "" });
+                                            setShowProfileModal(true);
+                                        }}
+                                        className="mt-10 bg-gray-900 text-white px-10 py-3 text-sm font-bold rounded hover:bg-gray-800 transition-all uppercase tracking-wider"
+                                    >
+                                        Edit Details
+                                    </button>
+
+                                </motion.div>
                             )}
 
                             {activeTab === "orders" && (
-                                <div>
-                                    <h2 className="text-2xl font-bold mb-6">My Orders</h2>
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                    <h2 className="text-xl font-bold border-b pb-4 mb-6">Past Orders</h2>
                                     {loading ? (
-                                        <div className="text-center py-8">
-                                            <div className="spinner mx-auto mb-4"></div>
-                                            <p>Loading orders...</p>
-                                        </div>
+                                        <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-pink-500"></div></div>
                                     ) : orders.length === 0 ? (
-                                        <div className="text-center py-8">
-                                            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                                            <p className="text-gray-600">No orders found</p>
-                                            <Link to="/" className="text-pink-500 hover:underline mt-2 inline-block">
-                                                Start Shopping
-                                            </Link>
+                                        <div className="text-center py-20">
+                                            <Package size={50} className="mx-auto text-gray-200 mb-4" />
+                                            <p className="text-gray-500">No orders yet.</p>
+                                            <Link to="/" className="text-pink-500 font-bold mt-2 inline-block">START SHOPPING</Link>
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
                                             {orders.map((order) => (
-                                                <motion.div
-                                                    key={order._id}
-                                                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                                                    initial={{ opacity: 0, y: 20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                >
-                                                    <div className="flex items-center justify-between mb-3">
+                                                <div key={order._id} className="border p-4 rounded hover:border-pink-200 transition-colors">
+                                                    <div className="flex justify-between items-start mb-4">
                                                         <div>
-                                                            <h3 className="font-semibold">Order #{order._id.slice(-8)}</h3>
-                                                            <p className="text-sm text-gray-600">
-                                                                Placed on {new Date(order.createdAt).toLocaleDateString()}
-                                                            </p>
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Order ID: #{order._id.slice(-8)}</p>
+                                                            <p className="text-xs text-gray-400">{new Date(order.createdAt).toDateString()}</p>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <span
-                                                                className={`px-3 py-1 rounded-full text-sm font-medium ${order.isDelivered
-                                                                    ? "bg-green-100 text-green-800"
-                                                                    : order.isPaid
-                                                                        ? "bg-blue-100 text-blue-800"
-                                                                        : "bg-yellow-100 text-yellow-800"
-                                                                    }`}
-                                                            >
-                                                                {order.isDelivered ? "Delivered" : order.isPaid ? "Paid" : "Pending"}
-                                                            </span>
-                                                            <p className="text-lg font-bold mt-1">₹{order.totalPrice}</p>
-                                                        </div>
+                                                        <p className="font-bold text-gray-800">₹{order.totalPrice}</p>
                                                     </div>
-                                                    <div className="flex items-center space-x-4">
-                                                        <div className="flex -space-x-2">
-                                                            {order.orderItems.slice(0, 3).map((item, index) => (
-                                                                <img
-                                                                    key={index}
-                                                                    src={item.image || "/placeholder.svg"}
-                                                                    alt={item.name}
-                                                                    className="w-10 h-10 rounded-full border-2 border-white object-cover"
-                                                                />
-                                                            ))}
-                                                            {order.orderItems.length > 3 && (
-                                                                <div className="w-10 h-10 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs font-medium">
-                                                                    +{order.orderItems.length - 3}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <p className="text-sm text-gray-600">
-                                                                {order.orderItems.length} item{order.orderItems.length > 1 ? "s" : ""}
-                                                            </p>
-                                                        </div>
-                                                        <Link
-                                                            to={`/order/${order._id}`}
-                                                            className="text-pink-500 hover:text-pink-600 font-medium text-sm"
-                                                        >
-                                                            View Details
-                                                        </Link>
+                                                    <div className="flex gap-2">
+                                                        {order.orderItems.map((item, i) => (
+                                                            <img key={i} src={item.image} className="w-12 h-16 object-cover rounded shadow-sm border" alt={item.name} />
+                                                        ))}
                                                     </div>
-                                                </motion.div>
+                                                    <Link to={`/order/${order._id}`} className="mt-4 inline-block text-xs font-bold text-pink-500 hover:underline">VIEW FULL DETAILS</Link>
+                                                </div>
                                             ))}
                                         </div>
                                     )}
-                                </div>
+                                </motion.div>
                             )}
 
                             {activeTab === "addresses" && (
-                                <div>
-                                    <h2 className="text-2xl font-bold mb-6">Saved Addresses</h2>
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                    <div className="flex justify-between items-center border-b pb-4 mb-6">
+                                        <h2 className="text-xl font-bold">Saved Addresses</h2>
+                                        <button onClick={openAddModal} className="text-pink-500 font-bold text-xs border border-pink-500 px-4 py-2 rounded-sm hover:bg-pink-50 transition-all">
+                                            + ADD NEW ADDRESS
+                                        </button>
+                                    </div>
                                     {user?.addresses?.length === 0 ? (
-                                        <div className="text-center py-8">
-                                            <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                                            <p className="text-gray-600">No addresses saved</p>
+                                        <div className="text-center py-20">
+                                            <MapPin size={50} className="mx-auto text-gray-200 mb-4" />
+                                            <p className="text-gray-500">No addresses saved yet.</p>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {user?.addresses?.map((address) => (
-                                                <div key={address._id} className="border rounded-lg p-4">
-                                                    <div className="flex items-start justify-between mb-2">
-                                                        <h3 className="font-medium">{address.name}</h3>
-                                                        {address.isDefault && (
-                                                            <span className="bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded">Default</span>
-                                                        )}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {user?.addresses?.map((addr, index) => (
+                                                <div key={index} className="border p-5 rounded-md relative hover:shadow-sm transition-all">
+                                                    {addr.isDefault && (
+                                                        <span className="absolute top-0 right-0 bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded-bl-md uppercase">Default</span>
+                                                    )}
+                                                    <h3 className="font-bold text-gray-800 mb-1 uppercase text-sm">{addr.name}</h3>
+                                                    <p className="text-sm text-gray-600 leading-relaxed">
+                                                        {addr.address}, <br /> {addr.city}, {addr.state} - <span className="font-bold">{addr.pincode}</span>
+                                                    </p>
+                                                    <p className="text-sm font-bold text-gray-700 mt-4">Mobile: <span className="font-medium">{addr.phone}</span></p>
+                                                    <div className="mt-6 flex gap-4 border-t pt-4">
+                                                        <button onClick={() => openEditModal(addr)} className="text-xs font-bold text-pink-500 hover:underline">EDIT</button>
+                                                        <button onClick={() => handleDeleteAddress(addr._id)} className="text-xs font-bold text-gray-400 hover:text-red-500">REMOVE</button>
                                                     </div>
-                                                    <p className="text-gray-600 text-sm mb-2">
-                                                        {address.address}, {address.city}
-                                                    </p>
-                                                    <p className="text-gray-600 text-sm mb-2">
-                                                        {address.state} - {address.pincode}
-                                                    </p>
-                                                    <p className="text-gray-600 text-sm">Phone: {address.phone}</p>
                                                 </div>
                                             ))}
                                         </div>
                                     )}
-                                </div>
+                                </motion.div>
                             )}
-
-                            {/* {activeTab === "wishlist" && (
-                                <div>
-                                    <h2 className="text-2xl font-bold mb-6">My Wishlist</h2>
-                                    <p className="text-gray-600">
-                                        <Link to="/wishlist" className="text-pink-500 hover:underline">
-                                            View your wishlist →
-                                        </Link>
-                                    </p>
-                                </div>
-                            )} */}
-
 
                             {activeTab === "wishlist" && (
-                                <div>
-                                    <h2 className="text-2xl font-bold mb-6">My Wishlist</h2>
-                                    {wishlistItems.length === 0 ? (
-                                        <div className="text-center py-8">
-                                            <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                                            <p className="text-gray-600">Your wishlist is empty.</p>
-                                            <Link to="/" className="text-pink-500 hover:underline mt-2 inline-block">
-                                                Browse Products
-                                            </Link>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                                            {wishlistItems.map((item) => (
-                                                <div key={item._id} className="border rounded-lg p-4 shadow-sm">
-                                                    <img
-                                                        src={item.image}
-                                                        alt={item.title}
-                                                        className="w-full h-40 object-cover rounded"
-                                                    />
-                                                    <h3 className="text-lg font-medium mt-2">{item.title}</h3>
-                                                    <p className="text-gray-600 text-sm">{item.brand}</p>
-                                                    <p className="font-bold text-pink-600 mt-1">₹{item.price}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-
-                            {activeTab === "settings" && (
-                                <div>
-                                    <h2 className="text-2xl font-bold mb-6">Account Settings</h2>
-                                    <div className="space-y-6">
-                                        <div>
-                                            <h3 className="text-lg font-medium mb-3">Notifications</h3>
-                                            <div className="space-y-3">
-                                                <label className="flex items-center">
-                                                    <input type="checkbox" className="mr-3" defaultChecked />
-                                                    <span>Email notifications for orders</span>
-                                                </label>
-                                                <label className="flex items-center">
-                                                    <input type="checkbox" className="mr-3" defaultChecked />
-                                                    <span>SMS notifications for delivery</span>
-                                                </label>
-                                                <label className="flex items-center">
-                                                    <input type="checkbox" className="mr-3" />
-                                                    <span>Promotional emails</span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-medium mb-3">Privacy</h3>
-                                            <div className="space-y-3">
-                                                <label className="flex items-center">
-                                                    <input type="checkbox" className="mr-3" defaultChecked />
-                                                    <span>Make my profile public</span>
-                                                </label>
-                                                <label className="flex items-center">
-                                                    <input type="checkbox" className="mr-3" />
-                                                    <span>Share data for personalized recommendations</span>
-                                                </label>
-                                            </div>
-                                        </div>
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                    <h2 className="text-xl font-bold border-b pb-4 mb-6">Saved Items</h2>
+                                    <div className="text-center py-20">
+                                        <Heart size={50} className="mx-auto text-pink-100 mb-4" />
+                                        <p className="text-gray-500 mb-4">Move your favorites to bag!</p>
+                                        <Link to="/wishlist" className="bg-pink-500 text-white px-8 py-2 font-bold text-xs">GO TO WISHLIST</Link>
                                     </div>
-                                </div>
+                                </motion.div>
                             )}
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* ✅ Address Modal */}
+            <AnimatePresence>
+                {showModal && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white w-full max-w-lg rounded-lg shadow-xl p-6"
+                        >
+                            <div className="flex justify-between items-center mb-6 border-b pb-4">
+                                <h2 className="text-lg font-bold uppercase">{isEditMode ? "Edit Address" : "Add New Address"}</h2>
+                                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-black transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSaveAddress} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Contact Name</label>
+                                        <input type="text" placeholder="Name*" required className="w-full border p-2.5 rounded text-sm outline-none focus:border-pink-500"
+                                            onChange={(e) => setAddressForm({ ...addressForm, name: e.target.value })} value={addressForm.name} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Mobile No</label>
+                                        <input type="text" placeholder="Mobile No*" required className="w-full border p-2.5 rounded text-sm outline-none focus:border-pink-500"
+                                            onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })} value={addressForm.phone} />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Pincode</label>
+                                    <input type="text" placeholder="Pincode*" required className="border p-2.5 w-full rounded text-sm outline-none focus:border-pink-500"
+                                        onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })} value={addressForm.pincode} />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Address Detail</label>
+                                    <input type="text" placeholder="Address (House No, Building, Street)*" required className="border p-2.5 w-full rounded text-sm outline-none focus:border-pink-500"
+                                        onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })} value={addressForm.address} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">City</label>
+                                        <input type="text" placeholder="City*" required className="w-full border p-2.5 rounded text-sm outline-none focus:border-pink-500"
+                                            onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })} value={addressForm.city} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">State</label>
+                                        <input type="text" placeholder="State*" required className="w-full border p-2.5 rounded text-sm outline-none focus:border-pink-500"
+                                            onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })} value={addressForm.state} />
+                                    </div>
+                                </div>
+
+                                <button type="submit" disabled={loading} className="w-full bg-pink-500 text-white py-3 rounded font-bold hover:bg-pink-600 transition-colors mt-4 disabled:bg-pink-300">
+                                    {loading ? "SAVING..." : (isEditMode ? "UPDATE ADDRESS" : "ADD ADDRESS")}
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+            {/* ✅ Profile Edit Modal */}
+            <AnimatePresence>
+                {showProfileModal && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white w-full max-w-md rounded-lg shadow-xl p-8"
+                        >
+                            <div className="flex justify-between items-center mb-6 border-b pb-4">
+                                <h2 className="text-lg font-bold uppercase tracking-tight">Edit Profile</h2>
+                                <button onClick={() => setShowProfileModal(false)}>
+                                    <X size={24} className="text-gray-400 hover:text-black" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleUpdateProfile} className="space-y-5">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={profileForm.name}
+                                        required
+                                        className="w-full border-b-2 p-2 outline-none focus:border-pink-500 transition-all text-sm font-medium"
+                                        onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={profileForm.email}
+                                        required
+                                        className="w-full border-b-2 p-2 outline-none focus:border-pink-500 transition-all text-sm font-medium"
+                                        onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Mobile Number</label>
+                                    <input
+                                        type="text"
+                                        value={profileForm.phone}
+                                        placeholder="Add your mobile number"
+                                        className="w-full border-b-2 p-2 outline-none focus:border-pink-500 transition-all text-sm font-medium"
+                                        onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-pink-500 text-white py-3 rounded font-bold mt-4 shadow-lg hover:bg-pink-600 disabled:bg-pink-300 transition-all uppercase text-sm"
+                                >
+                                    {loading ? "Saving Changes..." : "Save Details"}
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }
 
 export default Profile
-
-
-
-
-
-// import React, { useState, useEffect } from "react"
-// import { useSearchParams, useNavigate } from "react-router-dom"
-
-// const Profile = () => {
-//     const [searchParams] = useSearchParams()
-//     const navigate = useNavigate()
-
-//     // Get tab from URL or default to 'profile'
-//     const initialTab = searchParams.get("tab") || "profile"
-//     const [activeTab, setActiveTab] = useState(initialTab)
-
-//     // Update tab state when URL changes
-//     useEffect(() => {
-//         const tabParam = searchParams.get("tab")
-//         if (tabParam && tabParam !== activeTab) {
-//             setActiveTab(tabParam)
-//         }
-//     }, [searchParams])
-
-//     // Update both state and URL when user clicks a tab
-//     const handleTabChange = (tab) => {
-//         setActiveTab(tab)
-//         navigate(`/profile?tab=${tab}`)
-//     }
-
-//     const renderContent = () => {
-//         switch (activeTab) {
-//             case "profile":
-//                 return (
-//                     <div className="p-4 bg-white shadow rounded">
-//                         <h2 className="text-xl font-bold mb-2">User Profile</h2>
-//                         <p>Name: John Doe</p>
-//                         <p>Email: john@example.com</p>
-//                     </div>
-//                 )
-//             case "orders":
-//                 return (
-//                     <div className="p-4 bg-white shadow rounded">
-//                         <h2 className="text-xl font-bold mb-2">Your Orders</h2>
-//                         <p>Order #1</p>
-//                         <p>Order #2</p>
-//                     </div>
-//                 )
-//             case "addresses":
-//                 return (
-//                     <div className="p-4 bg-white shadow rounded">
-//                         <h2 className="text-xl font-bold mb-2">Saved Addresses</h2>
-//                         <p>123 Main Street</p>
-//                         <p>456 Another Ave</p>
-//                     </div>
-//                 )
-//             case "wishlist":
-//                 return (
-//                     <div className="p-4 bg-white shadow rounded">
-//                         <h2 className="text-xl font-bold mb-2">Your Wishlist</h2>
-//                         <p>Product A</p>
-//                         <p>Product B</p>
-//                     </div>
-//                 )
-//             default:
-//                 return (
-//                     <div className="p-4 bg-white shadow rounded">
-//                         <h2 className="text-xl font-bold mb-2">Not Found</h2>
-//                         <p>The selected tab does not exist.</p>
-//                     </div>
-//                 )
-//         }
-//     }
-
-//     return (
-//         <div className="max-w-4xl mx-auto p-4">
-//             <h1 className="text-3xl font-bold mb-6">My Account</h1>
-//             <div className="flex space-x-4 mb-6">
-//                 <button
-//                     className={`px-4 py-2 rounded ${activeTab === "profile" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
-//                     onClick={() => handleTabChange("profile")}
-//                 >
-//                     Profile
-//                 </button>
-//                 <button
-//                     className={`px-4 py-2 rounded ${activeTab === "orders" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
-//                     onClick={() => handleTabChange("orders")}
-//                 >
-//                     Orders
-//                 </button>
-//                 <button
-//                     className={`px-4 py-2 rounded ${activeTab === "addresses" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
-//                     onClick={() => handleTabChange("addresses")}
-//                 >
-//                     Addresses
-//                 </button>
-//                 <button
-//                     className={`px-4 py-2 rounded ${activeTab === "wishlist" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
-//                     onClick={() => handleTabChange("wishlist")}
-//                 >
-//                     Wishlist
-//                 </button>
-//             </div>
-
-//             {renderContent()}
-//         </div>
-//     )
-// }
-
-// export default Profile
-
-
-
-
-// import React, { useState, useEffect } from "react"
-// import { useNavigate, useSearchParams, Link } from "react-router-dom"
-// import { motion } from "framer-motion"
-// import { User, MapPin, Package, Heart, Settings, LogOut } from "lucide-react"
-// import { useApp } from "../context/AppContext"
-// import { orderService } from "../services/orderService"
-
-// const Profile = () => {
-//     const { user, logout, isAuthenticated } = useApp()
-//     const [orders, setOrders] = useState([])
-//     const [loading, setLoading] = useState(false)
-
-//     const [searchParams] = useSearchParams()
-//     const navigate = useNavigate()
-
-//     // Initial tab comes from URL or defaults to 'profile'
-//     const initialTab = searchParams.get("tab") || "profile"
-//     const [activeTab, setActiveTab] = useState(initialTab)
-
-//     // Sync tab when URL changes
-//     useEffect(() => {
-//         const urlTab = searchParams.get("tab")
-//         if (urlTab && urlTab !== activeTab) {
-//             setActiveTab(urlTab)
-//         }
-//     }, [searchParams])
-
-//     // Update tab in both state + URL
-//     const handleTabChange = (tab) => {
-//         setActiveTab(tab)
-//         navigate(`/profile?tab=${tab}`)
-//     }
-
-//     // Fetch orders only when needed
-//     useEffect(() => {
-//         if (!isAuthenticated) return
-
-//         if (activeTab === "orders") {
-//             fetchOrders()
-//         }
-//     }, [activeTab, isAuthenticated])
-
-//     const fetchOrders = async () => {
-//         try {
-//             setLoading(true)
-//             const response = await orderService.getMyOrders()
-//             setOrders(response.data || [])
-//         } catch (error) {
-//             console.error("Error fetching orders", error)
-//         } finally {
-//             setLoading(false)
-//         }
-//     }
-
-//     const tabs = [
-//         { id: "profile", label: "Profile", icon: User },
-//         { id: "orders", label: "Orders", icon: Package },
-//         { id: "addresses", label: "Addresses", icon: MapPin },
-//         { id: "wishlist", label: "Wishlist", icon: Heart },
-//         { id: "settings", label: "Settings", icon: Settings },
-//     ]
-
-//     if (!isAuthenticated) {
-//         return (
-//             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-//                 <div className="text-center">
-//                     <User className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-//                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Please login to view your profile</h2>
-//                     <Link to="/login" className="bg-pink-500 text-white px-6 py-3 rounded-lg hover:bg-pink-600 transition-colors">
-//                         Login
-//                     </Link>
-//                 </div>
-//             </div>
-//         )
-//     }
-
-//     return (
-//         <div className="min-h-screen bg-gray-50">
-//             <div className="container mx-auto px-4 py-8">
-//                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-//                     {/* Sidebar */}
-//                     <div className="lg:col-span-1">
-//                         <div className="bg-white rounded-lg shadow-sm p-6">
-//                             <div className="text-center mb-6">
-//                                 {user?.profilePic ? (
-//                                     <img
-//                                         src={user.profilePic}
-//                                         alt={user.name}
-//                                         className="w-20 h-20 rounded-full object-cover mx-auto mb-3"
-//                                     />
-//                                 ) : (
-//                                     <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-3">
-//                                         <User className="w-10 h-10 text-pink-500" />
-//                                     </div>
-//                                 )}
-//                                 <h2 className="text-xl font-semibold">{user?.name}</h2>
-//                                 <p className="text-gray-600 text-sm">{user?.email}</p>
-//                             </div>
-
-//                             <nav className="space-y-2">
-//                                 {tabs.map((tab) => {
-//                                     const Icon = tab.icon
-//                                     return (
-//                                         <button
-//                                             key={tab.id}
-//                                             onClick={() => handleTabChange(tab.id)}
-//                                             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${activeTab === tab.id
-//                                                 ? "bg-pink-50 text-pink-600 border-r-2 border-pink-500"
-//                                                 : "text-gray-600 hover:bg-gray-50"
-//                                                 }`}
-//                                         >
-//                                             <Icon className="w-5 h-5" />
-//                                             <span>{tab.label}</span>
-//                                         </button>
-//                                     )
-//                                 })}
-//                                 <button
-//                                     onClick={logout}
-//                                     className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left text-red-600 hover:bg-red-50 transition-colors"
-//                                 >
-//                                     <LogOut className="w-5 h-5" />
-//                                     <span>Logout</span>
-//                                 </button>
-//                             </nav>
-//                         </div>
-//                     </div>
-
-//                     {/* Main Content */}
-//                     <div className="lg:col-span-3">
-//                         <div className="bg-white rounded-lg shadow-sm p-6">
-//                             {/* 🔁 Keep all your tab content exactly the same as before */}
-//                             {/* Copy and paste your existing tab content here */}
-//                             {/* ⬇️ Existing tab rendering is preserved ⬇️ */}
-
-//                             {/* Example (just for context): */}
-//                             {activeTab === "profile" && (
-//                                 <div>
-//                                     <h2 className="text-2xl font-bold mb-6">Profile Information</h2>
-//                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-//                                         <div>
-//                                             <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-//                                             <input
-//                                                 type="text"
-//                                                 value={user?.name || ""}
-//                                                 readOnly
-//                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-//                                             />
-//                                         </div>
-//                                         <div>
-//                                             <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-//                                             <input
-//                                                 type="email"
-//                                                 value={user?.email || ""}
-//                                                 readOnly
-//                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-//                                             />
-//                                         </div>
-//                                         <div>
-//                                             <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-//                                             <input
-//                                                 type="tel"
-//                                                 value={user?.phone || ""}
-//                                                 readOnly
-//                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-//                                             />
-//                                         </div>
-//                                         <div>
-//                                             <label className="block text-sm font-medium text-gray-700 mb-2">Member Since</label>
-//                                             <input
-//                                                 type="text"
-//                                                 value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
-//                                                 readOnly
-//                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-//                                             />
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             )}
-
-//                             {/* ⬆️ Also keep orders, addresses, wishlist, settings exactly same as in your original */}
-
-//                             {/* Paste all other tab rendering logic here unchanged */}
-//                             {/* "orders", "addresses", "wishlist", "settings" logic — same as before */}
-
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default Profile
-
-
-
-
-
-
-// import React, { useState } from "react"
-// import { User, LogOut, Map, Heart, Lock, Unlock } from "lucide-react"
-// import ProfileDropdown from "../components/ProfileDropDown"
-
-// const Profile = () => {
-//     const user = JSON.parse(localStorage.getItem("user"))
-//     const [activeTab, setActiveTab] = useState("orders")
-
-//     const handleTabChange = (tab) => setActiveTab(tab)
-
-//     return (
-//         <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
-//             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
-
-//                 {/* Sidebar Navigation */}
-//                 <aside className="bg-white rounded-xl shadow-md p-4">
-//                     <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-//                         <User className="w-5 h-5" /> Account
-//                     </h2>
-//                     <ul className="space-y-3">
-//                         <li
-//                             onClick={() => handleTabChange("orders")}
-//                             className={`cursor-pointer p-2 rounded-lg flex items-center gap-2 ${activeTab === "orders" ? "bg-gray-200 font-medium" : "hover:bg-gray-100"
-//                                 }`}
-//                         >
-//                             <Map className="w-4 h-4" />
-//                             My Orders
-//                         </li>
-//                         <li
-//                             onClick={() => handleTabChange("wishlist")}
-//                             className={`cursor-pointer p-2 rounded-lg flex items-center gap-2 ${activeTab === "wishlist" ? "bg-gray-200 font-medium" : "hover:bg-gray-100"
-//                                 }`}
-//                         >
-//                             <Heart className="w-4 h-4" />
-//                             Wishlist
-//                         </li>
-//                         <li
-//                             onClick={() => handleTabChange("security")}
-//                             className={`cursor-pointer p-2 rounded-lg flex items-center gap-2 ${activeTab === "security" ? "bg-gray-200 font-medium" : "hover:bg-gray-100"
-//                                 }`}
-//                         >
-//                             <Lock className="w-4 h-4" />
-//                             Security
-//                         </li>
-//                         <li
-//                             onClick={() => handleTabChange("logout")}
-//                             className="cursor-pointer p-2 rounded-lg flex items-center gap-2 text-red-500 hover:bg-red-100"
-//                         >
-//                             <LogOut className="w-4 h-4" />
-//                             Logout
-//                         </li>
-//                     </ul>
-//                 </aside>
-
-//                 {/* Main Content */}
-//                 <main className="lg:col-span-3 bg-white rounded-xl shadow-md p-6">
-//                     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-//                         <div className="flex items-center gap-4">
-//                             {user?.profilePic ? (
-//                                 <img
-//                                     src={user.profilePic}
-//                                     alt="Profile"
-//                                     className="w-14 h-14 rounded-full object-cover"
-//                                 />
-//                             ) : (
-//                                 <User className="w-10 h-10" />
-//                             )}
-//                             <div>
-//                                 <h3 className="text-xl font-semibold">{user?.name}</h3>
-//                                 <p className="text-sm text-gray-600">{user?.email}</p>
-//                             </div>
-//                         </div>
-//                     </div>
-
-//                     {/* 👇 ProfileDropdown inserted statically here */}
-//                     <div className="mb-6">
-//                         <ProfileDropdown isLoggedIn={!!user} />
-//                     </div>
-
-//                     {/* Tabs Content */}
-//                     {activeTab === "orders" && (
-//                         <div>
-//                             <h4 className="text-lg font-semibold mb-2">My Orders</h4>
-//                             <p className="text-sm text-gray-600">You have no orders yet.</p>
-//                         </div>
-//                     )}
-//                     {activeTab === "wishlist" && (
-//                         <div>
-//                             <h4 className="text-lg font-semibold mb-2">My Wishlist</h4>
-//                             <p className="text-sm text-gray-600">Your wishlist is empty.</p>
-//                         </div>
-//                     )}
-//                     {activeTab === "security" && (
-//                         <div>
-//                             <h4 className="text-lg font-semibold mb-2">Security Settings</h4>
-//                             <p className="text-sm text-gray-600">Update your password and security preferences.</p>
-//                             <div className="mt-4 flex gap-3">
-//                                 <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1">
-//                                     <Unlock className="w-4 h-4" />
-//                                     Change Password
-//                                 </button>
-//                             </div>
-//                         </div>
-//                     )}
-//                     {activeTab === "logout" && (
-//                         <div>
-//                             <h4 className="text-lg font-semibold mb-2 text-red-600">Are you sure you want to logout?</h4>
-//                             <button className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-//                                 Confirm Logout
-//                             </button>
-//                         </div>
-//                     )}
-//                 </main>
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default Profile

@@ -1,537 +1,252 @@
-// import { useState, useEffect } from "react"
-// import { useParams, Link } from "react-router-dom"
+// import { useEffect, useState } from "react"
+// import { useParams, Link, useNavigate } from "react-router-dom"
+// import { useDispatch, useSelector } from "react-redux"
 // import { motion } from "framer-motion"
-// import { Heart, Star, Truck, RotateCcw, Shield } from "lucide-react"
-// import { useCart } from "../context/CartContext"
+// import { Heart, Star, Truck, RotateCcw, Shield, ShoppingBag } from "lucide-react"
+// import { listProductDetails, resetProductState } from "../redux/slices/productSlice"
+// import { addToCart } from "../redux/slices/cartSlice" // ✅ Action imported
+// import { toggleWishlist } from "../redux/slices/wishlistSlice" // ✅ Action imported
+// import toast from "react-hot-toast"
 
 // const ProductDetail = () => {
 //     const { id } = useParams()
-//     const { addToCart } = useCart()
-//     const [product, setProduct] = useState(null)
+//     const dispatch = useDispatch()
+//     const navigate = useNavigate()
+
+//     // Redux State
+//     const { product, loading, error } = useSelector((state) => state.products)
+//     const { isAuthenticated } = useSelector((state) => state.auth)
+//     const { wishlist } = useSelector((state) => state.wishlist || { wishlist: [] })
+
+//     // Local UI State
 //     const [selectedSize, setSelectedSize] = useState("")
 //     const [selectedImage, setSelectedImage] = useState(0)
 //     const [pincode, setPincode] = useState("")
-//     const [isWishlisted, setIsWishlisted] = useState(false)
-
-//     // Mock product data
-//     const mockProduct = {
-//         id: 1,
-//         name: "The Lifestyle Co Men Blue Slim Fit Mid-Rise Clean Look Stretchable Jeans",
-//         brand: "Roadster",
-//         price: 644,
-//         originalPrice: 1499,
-//         discount: 57,
-//         rating: 4.0,
-//         reviews: 821,
-//         images: [
-//             "/placeholder.svg?height=600&width=400",
-//             "/placeholder.svg?height=600&width=400",
-//             "/placeholder.svg?height=600&width=400",
-//             "/placeholder.svg?height=600&width=400",
-//         ],
-//         sizes: [
-//             { size: "28", available: true },
-//             { size: "30", available: true },
-//             { size: "32", available: true },
-//             { size: "34", available: false },
-//             { size: "36", available: false },
-//         ],
-//         description: "Blue mid-rise jeans, has a button and zip closure, 4 pockets, clean look with no fade",
-//         features: ["100% Original Products", "Pay on delivery might be available", "Easy 7 days returns and exchanges"],
-//         offers: [
-//             {
-//                 title: "Best Price",
-//                 subtitle: "Rs. 418",
-//                 description: "Applicable on: Orders above Rs. 699 (only on first purchase)",
-//                 code: "MYNTRASAVE",
-//             },
-//             {
-//                 title: "10% Discount on IDFC FIRST SWYP Credit Card",
-//                 description: "Min Spend ₹850, Max Discount ₹350",
-//             },
-//             {
-//                 title: "10% Discount on HSBC Credit Cards",
-//                 description: "Min Spend ₹3000, Max Discount ₹1500",
-//             },
-//         ],
-//         specifications: [
-//             { key: "Fit", value: "Slim Fit" },
-//             { key: "Length", value: "Regular" },
-//             { key: "Pattern", value: "Solid" },
-//             { key: "Occasion", value: "Casual" },
-//             { key: "Wash Care", value: "Machine Wash" },
-//         ],
-//     }
 
 //     useEffect(() => {
-//         // Simulate API call
-//         setProduct(mockProduct)
-//     }, [id])
+//         dispatch(listProductDetails(id))
+//         return () => dispatch(resetProductState())
+//     }, [dispatch, id])
 
+//     // ✅ Add to Cart Handler
+//     // ✅ Add to Cart Handler (Updated with Safety Checks)
 //     const handleAddToBag = () => {
-//         if (!selectedSize) {
-//             alert("Please select a size")
-//             return
+//         if (!isAuthenticated) {
+//             toast.error("Please login to add items to bag");
+//             navigate("/login");
+//             return;
 //         }
 
-//         addToCart({
-//             id: product.id,
+//         if (!selectedSize) {
+//             toast.error("Please select a size first");
+//             return;
+//         }
+
+//         // Safety check for image
+//         const productImage = product.images && product.images.length > 0
+//             ? product.images[0]
+//             : (product.image || "");
+
+//         const cartData = {
+//             productId: product._id, // ✅ Matches controller's destructuring
 //             name: product.name,
-//             brand: product.brand,
 //             price: product.price,
-//             image: product.images[0],
-//             size: selectedSize,
-//         })
+//             image: productImage, // ✅ Guaranteed string
+//             qty: 1,
+//             size: selectedSize
+//         };
 
-//         alert("Added to bag successfully!")
-//     }
+//         dispatch(addToCart(cartData))
+//             .unwrap()
+//             .then(() => {
+//                 // Myntra Style Custom Toast
+//                 toast.success("Added to Bag", {
+//                     icon: '🛍️',
+//                     style: {
+//                         borderRadius: '4px',
+//                         background: '#333',
+//                         color: '#fff',
+//                         fontSize: '14px'
+//                     }
+//                 });
+//             })
+//             .catch((err) => {
+//                 toast.error(err || "Failed to add to bag");
+//             });
+//     };
 
+//     // ✅ Wishlist Toggle Handler
 //     const handleWishlist = () => {
-//         setIsWishlisted(!isWishlisted)
+//         if (!isAuthenticated) {
+//             toast.error("Please login to use wishlist")
+//             navigate("/login")
+//             return
+//         }
+//         dispatch(toggleWishlist(product._id))
+//             .unwrap()
+//             .then(() => toast.success("Wishlist updated!"))
 //     }
 
-//     if (!product) {
-//         return <div className="flex justify-center items-center h-screen">Loading...</div>
-//     }
+//     const isItemInWishlist = wishlist?.some(item => item._id === product._id)
 
-//     return (
-//         <div className="min-h-screen bg-white">
-//             {/* Breadcrumb */}
-//             <div className="bg-gray-50 py-3">
-//                 <div className="container mx-auto px-4">
-//                     <nav className="text-sm text-gray-600">
-//                         <Link to="/" className="hover:text-pink-500">
-//                             Home
-//                         </Link>
-//                         <span className="mx-2">/</span>
-//                         <Link to="/clothing" className="hover:text-pink-500">
-//                             Clothing
-//                         </Link>
-//                         <span className="mx-2">/</span>
-//                         <Link to="/men-clothing" className="hover:text-pink-500">
-//                             Men Clothing
-//                         </Link>
-//                         <span className="mx-2">/</span>
-//                         <Link to="/jeans" className="hover:text-pink-500">
-//                             Jeans
-//                         </Link>
-//                         <span className="mx-2">/</span>
-//                         <span className="font-medium">Roadster Jeans → More By Roadster</span>
-//                     </nav>
-//                 </div>
-//             </div>
-
-//             <div className="container mx-auto px-4 py-6">
-//                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-//                     {/* Product Images */}
-//                     <div className="space-y-4">
-//                         <motion.div
-//                             className="aspect-square bg-gray-100 rounded-lg overflow-hidden"
-//                             initial={{ opacity: 0 }}
-//                             animate={{ opacity: 1 }}
-//                         >
-//                             <img
-//                                 src={product.images[selectedImage] || "/placeholder.svg"}
-//                                 alt={product.name}
-//                                 className="w-full h-full object-cover"
-//                             />
-//                         </motion.div>
-
-//                         <div className="grid grid-cols-4 gap-2">
-//                             {product.images.map((image, index) => (
-//                                 <button
-//                                     key={index}
-//                                     onClick={() => setSelectedImage(index)}
-//                                     className={`aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 ${selectedImage === index ? "border-pink-500" : "border-transparent"
-//                                         }`}
-//                                 >
-//                                     <img
-//                                         src={image || "/placeholder.svg"}
-//                                         alt={`Product ${index + 1}`}
-//                                         className="w-full h-full object-cover"
-//                                     />
-//                                 </button>
-//                             ))}
-//                         </div>
-//                     </div>
-
-//                     {/* Product Details */}
-//                     <div className="space-y-6">
-//                         <div>
-//                             <h1 className="text-2xl font-bold text-gray-800 mb-2">{product.brand}</h1>
-//                             <p className="text-gray-600 mb-4">{product.name}</p>
-
-//                             <div className="flex items-center mb-4">
-//                                 <div className="flex items-center bg-green-100 px-2 py-1 rounded">
-//                                     <span className="text-sm font-medium">{product.rating}</span>
-//                                     <Star className="w-4 h-4 text-green-600 ml-1 fill-current" />
-//                                 </div>
-//                                 <span className="text-sm text-gray-500 ml-2">| {product.reviews} Ratings</span>
-//                             </div>
-//                         </div>
-
-//                         {/* Price */}
-//                         <div className="border-b pb-4">
-//                             <div className="flex items-center space-x-3">
-//                                 <span className="text-2xl font-bold">₹{product.price}</span>
-//                                 <span className="text-lg text-gray-500 line-through">MRP ₹{product.originalPrice}</span>
-//                                 <span className="text-lg text-orange-500 font-medium">({product.discount}% OFF)</span>
-//                             </div>
-//                             <p className="text-sm text-green-600 mt-1">inclusive of all taxes</p>
-//                         </div>
-
-//                         {/* Size Selection */}
-//                         <div>
-//                             <div className="flex items-center justify-between mb-3">
-//                                 <h3 className="font-medium">SELECT SIZE</h3>
-//                                 <button className="text-pink-500 text-sm hover:underline">SIZE CHART →</button>
-//                             </div>
-//                             <div className="flex space-x-3">
-//                                 {product.sizes.map((sizeOption) => (
-//                                     <button
-//                                         key={sizeOption.size}
-//                                         onClick={() => sizeOption.available && setSelectedSize(sizeOption.size)}
-//                                         disabled={!sizeOption.available}
-//                                         className={`w-12 h-12 border rounded-full flex items-center justify-center text-sm font-medium ${selectedSize === sizeOption.size
-//                                                 ? "border-pink-500 bg-pink-50 text-pink-500"
-//                                                 : sizeOption.available
-//                                                     ? "border-gray-300 hover:border-gray-400"
-//                                                     : "border-gray-200 text-gray-400 cursor-not-allowed line-through"
-//                                             }`}
-//                                     >
-//                                         {sizeOption.size}
-//                                     </button>
-//                                 ))}
-//                             </div>
-//                         </div>
-
-//                         {/* Add to Bag */}
-//                         <div className="flex space-x-4">
-//                             <motion.button
-//                                 onClick={handleAddToBag}
-//                                 className="flex-1 bg-pink-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-pink-600 transition-colors flex items-center justify-center"
-//                                 whileHover={{ scale: 1.02 }}
-//                                 whileTap={{ scale: 0.98 }}
-//                             >
-//                                 🛍️ ADD TO BAG
-//                             </motion.button>
-//                             <motion.button
-//                                 onClick={handleWishlist}
-//                                 className={`px-6 py-3 border rounded-lg font-medium transition-colors flex items-center ${isWishlisted
-//                                         ? "border-pink-500 text-pink-500 bg-pink-50"
-//                                         : "border-gray-300 text-gray-700 hover:border-gray-400"
-//                                     }`}
-//                                 whileHover={{ scale: 1.02 }}
-//                                 whileTap={{ scale: 0.98 }}
-//                             >
-//                                 <Heart className={`w-5 h-5 mr-2 ${isWishlisted ? "fill-current" : ""}`} />
-//                                 WISHLIST
-//                             </motion.button>
-//                         </div>
-
-//                         {/* Delivery Options */}
-//                         <div className="border-t pt-4">
-//                             <div className="flex items-center mb-3">
-//                                 <Truck className="w-5 h-5 mr-2" />
-//                                 <h3 className="font-medium">DELIVERY OPTIONS</h3>
-//                             </div>
-//                             <div className="flex space-x-2 mb-3">
-//                                 <input
-//                                     type="text"
-//                                     placeholder="Enter pincode"
-//                                     value={pincode}
-//                                     onChange={(e) => setPincode(e.target.value)}
-//                                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-//                                 />
-//                                 <button className="px-4 py-2 text-pink-500 border border-pink-500 rounded-lg hover:bg-pink-50">
-//                                     Check
-//                                 </button>
-//                             </div>
-//                             <p className="text-sm text-gray-600 mb-4">
-//                                 Please enter PIN code to check delivery time & Pay on Delivery Availability
-//                             </p>
-
-//                             <div className="space-y-2 text-sm">
-//                                 <div className="flex items-center">
-//                                     <Shield className="w-4 h-4 mr-2 text-green-600" />
-//                                     <span>100% Original Products</span>
-//                                 </div>
-//                                 <div className="flex items-center">
-//                                     <Truck className="w-4 h-4 mr-2 text-blue-600" />
-//                                     <span>Pay on delivery might be available</span>
-//                                 </div>
-//                                 <div className="flex items-center">
-//                                     <RotateCcw className="w-4 h-4 mr-2 text-orange-600" />
-//                                     <span>Easy 7 days returns and exchanges</span>
-//                                 </div>
-//                             </div>
-//                         </div>
-
-//                         {/* Best Offers */}
-//                         <div className="border-t pt-4">
-//                             <div className="flex items-center mb-3">
-//                                 <span className="font-medium">BEST OFFERS</span>
-//                                 <span className="ml-2">🏷️</span>
-//                             </div>
-//                             <div className="space-y-3">
-//                                 {product.offers.map((offer, index) => (
-//                                     <div key={index} className="border border-gray-200 rounded-lg p-3">
-//                                         <div className="flex items-start justify-between">
-//                                             <div className="flex-1">
-//                                                 <h4 className="font-medium text-sm">{offer.title}</h4>
-//                                                 {offer.subtitle && <p className="text-lg font-bold text-green-600">{offer.subtitle}</p>}
-//                                                 <p className="text-xs text-gray-600 mt-1">{offer.description}</p>
-//                                                 {offer.code && <p className="text-xs text-pink-500 mt-1">Coupon code: {offer.code}</p>}
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 ))}
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
+//     if (loading) return (
+//         <div className="min-h-screen flex items-center justify-center">
+//             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-pink-500"></div>
 //         </div>
 //     )
-// }
 
-// export default ProductDetail
-
-
-// import { useState, useEffect } from "react"
-// import { useParams, Link } from "react-router-dom"
-// import { motion } from "framer-motion"
-// import { Heart, Star, Truck, RotateCcw, Shield } from "lucide-react"
-// import { useCart } from "../context/CartContext"
-// import { useWishlist } from "../context/WishlistContext"
-// import { getProductById } from "../data/products"
-
-// const ProductDetail = () => {
-//     const { id } = useParams()
-//     const { addToCart } = useCart()
-//     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
-//     const [product, setProduct] = useState(null)
-//     const [selectedSize, setSelectedSize] = useState("")
-//     const [selectedImage, setSelectedImage] = useState(0)
-//     const [pincode, setPincode] = useState("")
-
-//     useEffect(() => {
-//         const fetchProduct = async () => {
-//             try {
-//                 const data = await api.get(`/products/${id}`)
-//                 setProduct(data)
-//             } catch (err) {
-//                 console.error("Failed to fetch product:", err)
-//             }
-//         }
-//         fetchProduct()
-//     }, [id])
-
-//     const handleAddToBag = () => {
-//         if (!selectedSize) {
-//             alert("Please select a size")
-//             return
-//         }
-
-//         addToCart(product._id, 1, selectedSize)
-//         // 1 is quantity
-
-//         console.log("Adding to cart:", product)
-
-//         alert("Added to bag successfully!")
-//     }
-
-//     const handleWishlist = () => {
-//         if (isInWishlist(product.id)) {
-//             removeFromWishlist(product.id)
-//         } else {
-//             addToWishlist({
-//                 id: product.id,
-//                 name: product.name,
-//                 brand: product.brand,
-//                 price: product.price,
-//                 originalPrice: product.originalPrice,
-//                 image: product.image,
-//                 discount: product.discount,
-//             })
-//         }
-//     }
-
-//     if (!product) {
-//         return <div className="flex justify-center items-center h-screen">Product not found</div>
-//     }
+//     if (error) return <div className="p-10 text-center text-red-500 font-bold">{error}</div>
+//     if (!product?._id) return null
 
 //     return (
 //         <div className="min-h-screen bg-white">
-//             {/* Breadcrumb */}
-//             <div className="bg-gray-50 py-3">
-//                 <div className="container mx-auto px-4">
-//                     <nav className="text-sm text-gray-600">
-//                         <Link to="/" className="hover:text-pink-500">
-//                             Home
-//                         </Link>
-//                         <span className="mx-2">/</span>
-//                         <Link to={`/products/${product.category}`} className="hover:text-pink-500">
-//                             {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
-//                         </Link>
-//                         <span className="mx-2">/</span>
-//                         <span className="font-medium">
-//                             {product.brand} → {product.name}
-//                         </span>
-//                     </nav>
+//             <div className="bg-gray-50 py-3 border-b border-gray-100">
+//                 <div className="container mx-auto px-4 text-sm text-gray-500">
+//                     <Link to="/" className="hover:text-pink-500">Home</Link>
+//                     <span className="mx-2">/</span>
+//                     <span className="font-medium text-gray-800 uppercase tracking-tight">{product.brand}</span>
 //                 </div>
 //             </div>
 
-//             <div className="container mx-auto px-4 py-6">
-//                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-//                     {/* Product Images */}
-//                     <div className="space-y-4">
-//                         <motion.div
-//                             className="aspect-square bg-gray-100 rounded-lg overflow-hidden"
-//                             initial={{ opacity: 0 }}
-//                             animate={{ opacity: 1 }}
-//                         >
-//                             <img
-//                                 src={product.images[selectedImage] || product.image || "/placeholder.svg"}
-//                                 alt={product.name}
-//                                 className="w-full h-full object-cover"
-//                             />
-//                         </motion.div>
+//             <div className="container mx-auto px-4 py-8">
+//                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-//                         <div className="grid grid-cols-4 gap-2">
-//                             {product.images.map((image, index) => (
-//                                 <button
-//                                     key={index}
-//                                     onClick={() => setSelectedImage(index)}
-//                                     className={`aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 ${selectedImage === index ? "border-pink-500" : "border-transparent"
-//                                         }`}
-//                                 >
-//                                     <img
-//                                         src={image || "/placeholder.svg"}
-//                                         alt={`Product ${index + 1}`}
-//                                         className="w-full h-full object-cover"
-//                                     />
-//                                 </button>
+//                     {/* Left: Images */}
+//                     <div className="lg:col-span-7 flex flex-col md:flex-row gap-4">
+//                         <div className="order-2 md:order-1 flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto max-h-[600px] scrollbar-hide">
+//                             {(product.images?.length > 0 ? product.images : [product.image]).map((img, i) => (
+//                                 <img
+//                                     key={i}
+//                                     src={img}
+//                                     className={`w-16 h-20 md:w-20 md:h-24 object-cover cursor-pointer border-2 transition-all ${selectedImage === i ? 'border-pink-500 shadow-sm' : 'border-transparent opacity-70 hover:opacity-100'}`}
+//                                     onClick={() => setSelectedImage(i)}
+//                                     alt={`view-${i}`}
+//                                 />
 //                             ))}
+//                         </div>
+
+//                         {/* Left: Images (Thumbnails) */}
+//                         <div className="hidden md:flex flex-col gap-2">
+//                             {/* Agar images array hai toh loop chalao, varna single image ko array bana kar dikhao */}
+//                             {(product.images?.length > 0 ? product.images : [product.image]).map((img, i) => (
+//                                 img && ( // Ensure img exists
+//                                     <img
+//                                         key={i}
+//                                         src={img}
+//                                         className={`w-20 h-24 object-cover cursor-pointer border-2 transition-all ${selectedImage === i ? 'border-pink-500 shadow-sm' : 'border-transparent opacity-70 hover:opacity-100'
+//                                             }`}
+//                                         onClick={() => setSelectedImage(i)}
+//                                         alt="thumbnail"
+//                                     />
+//                                 )
+//                             ))}
+//                         </div>
+//                         <div className="order-1 md:order-2 flex-1 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
+//                             <motion.img
+//                                 initial={{ opacity: 0, scale: 0.95 }}
+//                                 animate={{ opacity: 1, scale: 1 }}
+//                                 key={selectedImage}
+//                                 src={product.images?.[selectedImage] || product.image}
+//                                 className="w-full h-full max-h-[650px] object-contain mix-blend-multiply"
+//                             />
 //                         </div>
 //                     </div>
 
-//                     {/* Product Details */}
-//                     <div className="space-y-6">
-//                         <div>
-//                             <h1 className="text-2xl font-bold text-gray-800 mb-2">{product.brand}</h1>
-//                             <p className="text-gray-600 mb-4">{product.name}</p>
+//                     {/* Right: Info */}
+//                     <div className="lg:col-span-5 space-y-5">
+//                         <div className="space-y-1">
+//                             <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-wide">{product.brand}</h1>
+//                             <p className="text-xl text-gray-500 font-light">{product.name}</p>
 
-//                             <div className="flex items-center mb-4">
-//                                 <div className="flex items-center bg-green-100 px-2 py-1 rounded">
-//                                     <span className="text-sm font-medium">{product.rating}</span>
-//                                     <Star className="w-4 h-4 text-green-600 ml-1 fill-current" />
-//                                 </div>
-//                                 <span className="text-sm text-gray-500 ml-2">| {product.reviews} Ratings</span>
+//                             <div className="flex items-center mt-3 border border-gray-200 w-fit px-3 py-1 rounded-sm font-bold text-sm bg-white hover:border-gray-400 transition-colors cursor-pointer">
+//                                 {product.rating} <Star size={14} className="ml-1 fill-green-600 text-green-600" />
+//                                 <span className="ml-2 text-gray-400 font-normal border-l pl-2"> {product.numReviews} Ratings</span>
 //                             </div>
 //                         </div>
 
-//                         {/* Price */}
-//                         <div className="border-b pb-4">
-//                             <div className="flex items-center space-x-3">
-//                                 <span className="text-2xl font-bold">₹{product.price}</span>
-//                                 <span className="text-lg text-gray-500 line-through">MRP ₹{product.originalPrice}</span>
-//                                 <span className="text-lg text-orange-500 font-medium">({product.discount}% OFF)</span>
+//                         <hr className="border-gray-100" />
+
+//                         <div className="space-y-1">
+//                             <div className="flex items-center gap-3">
+//                                 <span className="text-2xl font-bold text-gray-800">₹{product.price}</span>
+//                                 <span className="text-xl text-gray-400 line-through font-light">MRP ₹{product.originalPrice}</span>
+//                                 <span className="text-xl text-orange-500 font-bold">({product.discount}% OFF)</span>
 //                             </div>
-//                             <p className="text-sm text-green-600 mt-1">inclusive of all taxes</p>
+//                             <p className="text-green-600 font-bold text-xs tracking-wide">INCLUSIVE OF ALL TAXES</p>
 //                         </div>
 
 //                         {/* Size Selection */}
-//                         <div>
-//                             <div className="flex items-center justify-between mb-3">
-//                                 <h3 className="font-medium">SELECT SIZE</h3>
-//                                 <button className="text-pink-500 text-sm hover:underline">SIZE CHART →</button>
+//                         <div className="space-y-4 py-2">
+//                             <div className="flex justify-between items-center">
+//                                 <h3 className="font-bold text-gray-800 tracking-tight">SELECT SIZE</h3>
+//                                 <button className="text-pink-500 font-bold text-xs hover:underline">SIZE CHART →</button>
 //                             </div>
 //                             <div className="flex flex-wrap gap-3">
-//                                 {product.sizes.map((sizeOption) => (
+//                                 {product.sizes?.map((s) => (
 //                                     <button
-//                                         key={sizeOption.size}
-//                                         onClick={() => sizeOption.available && setSelectedSize(sizeOption.size)}
-//                                         disabled={!sizeOption.available}
-//                                         className={`px-4 py-2 border rounded-lg text-sm font-medium ${selectedSize === sizeOption.size
-//                                             ? "border-pink-500 bg-pink-50 text-pink-500"
-//                                             : sizeOption.available
-//                                                 ? "border-gray-300 hover:border-gray-400"
-//                                                 : "border-gray-200 text-gray-400 cursor-not-allowed line-through"
-//                                             }`}
+//                                         key={s.size}
+//                                         disabled={!s.available}
+//                                         onClick={() => setSelectedSize(s.size)}
+//                                         className={`w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-all
+//                                             ${selectedSize === s.size ? 'border-pink-500 text-pink-500 bg-pink-50' : 'border-gray-200 hover:border-pink-500'}
+//                                             ${!s.available && 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed line-through'}
+//                                         `}
 //                                     >
-//                                         {sizeOption.size}
+//                                         {s.size}
 //                                     </button>
 //                                 ))}
 //                             </div>
 //                         </div>
 
-//                         {/* Add to Bag */}
-//                         <div className="flex space-x-4">
+//                         {/* Actions */}
+//                         <div className="flex gap-4 pt-4">
 //                             <motion.button
+//                                 whileTap={{ scale: 0.95 }}
 //                                 onClick={handleAddToBag}
-//                                 className="flex-1 bg-pink-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-pink-600 transition-colors flex items-center justify-center"
-//                                 whileHover={{ scale: 1.02 }}
-//                                 whileTap={{ scale: 0.98 }}
+//                                 className="flex-1 bg-pink-500 text-white py-4 rounded-md font-bold flex items-center justify-center gap-3 hover:bg-pink-600 shadow-lg shadow-pink-100 transition-all"
 //                             >
-//                                 🛍️ ADD TO BAG
+//                                 <ShoppingBag size={20} /> ADD TO BAG
 //                             </motion.button>
+
 //                             <motion.button
+//                                 whileTap={{ scale: 0.95 }}
 //                                 onClick={handleWishlist}
-//                                 className={`px-6 py-3 border rounded-lg font-medium transition-colors flex items-center ${isInWishlist(product.id)
-//                                     ? "border-pink-500 text-pink-500 bg-pink-50"
-//                                     : "border-gray-300 text-gray-700 hover:border-gray-400"
-//                                     }`}
-//                                 whileHover={{ scale: 1.02 }}
-//                                 whileTap={{ scale: 0.98 }}
+//                                 className={`flex-1 border-2 py-4 rounded-md font-bold flex items-center justify-center gap-3 transition-all
+//                                     ${isItemInWishlist ? 'border-gray-800 bg-gray-800 text-white' : 'border-gray-300 text-gray-800 hover:border-gray-800'}
+//                                 `}
 //                             >
-//                                 <Heart className={`w-5 h-5 mr-2 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
-//                                 WISHLIST
+//                                 <Heart size={20} className={isItemInWishlist ? 'fill-white' : ''} />
+//                                 {isItemInWishlist ? 'WISHLISTED' : 'WISHLIST'}
 //                             </motion.button>
 //                         </div>
 
-//                         {/* Delivery Options */}
-//                         <div className="border-t pt-4">
-//                             <div className="flex items-center mb-3">
-//                                 <Truck className="w-5 h-5 mr-2" />
-//                                 <h3 className="font-medium">DELIVERY OPTIONS</h3>
+//                         {/* Delivery */}
+//                         <div className="space-y-4 pt-6">
+//                             <div className="flex items-center gap-2 font-bold text-gray-800">
+//                                 <Truck size={20} /> DELIVERY OPTIONS
 //                             </div>
-//                             <div className="flex space-x-2 mb-3">
+//                             <div className="relative w-full max-w-sm">
 //                                 <input
 //                                     type="text"
 //                                     placeholder="Enter pincode"
+//                                     className="w-full border-2 border-gray-200 p-3 rounded-md text-sm focus:outline-none focus:border-pink-500 transition-colors"
 //                                     value={pincode}
 //                                     onChange={(e) => setPincode(e.target.value)}
-//                                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
 //                                 />
-//                                 <button className="px-4 py-2 text-pink-500 border border-pink-500 rounded-lg hover:bg-pink-50">
-//                                     Check
-//                                 </button>
+//                                 <button className="absolute right-3 top-3 text-pink-500 font-bold text-sm hover:text-pink-600">Check</button>
 //                             </div>
-//                             <p className="text-sm text-gray-600 mb-4">
-//                                 Please enter PIN code to check delivery time & Pay on Delivery Availability
-//                             </p>
-
-//                             <div className="space-y-2 text-sm">
-//                                 <div className="flex items-center">
-//                                     <Shield className="w-4 h-4 mr-2 text-green-600" />
-//                                     <span>100% Original Products</span>
-//                                 </div>
-//                                 <div className="flex items-center">
-//                                     <Truck className="w-4 h-4 mr-2 text-blue-600" />
-//                                     <span>Pay on delivery might be available</span>
-//                                 </div>
-//                                 <div className="flex items-center">
-//                                     <RotateCcw className="w-4 h-4 mr-2 text-orange-600" />
-//                                     <span>Easy 7 days returns and exchanges</span>
-//                                 </div>
-//                             </div>
+//                             <p className="text-xs text-gray-500">Please enter PIN code to check delivery time & Pay on Delivery Availability</p>
 //                         </div>
 
-//                         {/* Product Description */}
-//                         <div className="border-t pt-4">
-//                             <h3 className="font-medium mb-2">PRODUCT DETAILS</h3>
-//                             <p className="text-sm text-gray-600">{product.description}</p>
+//                         <div className="grid grid-cols-1 gap-4 pt-4 border-t border-gray-100">
+//                             <div className="flex items-center gap-4 text-sm text-gray-700">
+//                                 <div className="p-2 bg-gray-50 rounded-full"><Shield size={18} className="text-gray-400" /></div>
+//                                 <span>100% Original Products</span>
+//                             </div>
+//                             <div className="flex items-center gap-4 text-sm text-gray-700">
+//                                 <div className="p-2 bg-gray-50 rounded-full"><RotateCcw size={18} className="text-gray-400" /></div>
+//                                 <span>Easy 7 days returns and exchanges</span>
+//                             </div>
 //                         </div>
 //                     </div>
 //                 </div>
@@ -543,375 +258,239 @@
 // export default ProductDetail
 
 
-import { useState, useEffect } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { useParams, Link, useNavigate } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
 import { motion } from "framer-motion"
-import { Heart, Star, Truck, RotateCcw, Shield } from "lucide-react"
-import { useApp } from "../context/AppContext"
-import { productService } from "../services/productService"
+import { Heart, Star, Truck, RotateCcw, Shield, ShoppingBag, ChevronRight } from "lucide-react"
+import { listProductDetails, resetProductState } from "../redux/slices/productSlice"
+import { addToCart } from "../redux/slices/cartSlice"
+import { toggleWishlist } from "../redux/slices/wishlistSlice"
 import toast from "react-hot-toast"
 
 const ProductDetail = () => {
     const { id } = useParams()
-    const { addToWishlist, removeFromWishlist, isInWishlist, isAuthenticated, addToCart } = useApp()
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
 
-    const [product, setProduct] = useState(null)
-    const [loading, setLoading] = useState(true)
+    const { product, loading, error } = useSelector((state) => state.products)
+    const { isAuthenticated } = useSelector((state) => state.auth)
+    const { wishlist } = useSelector((state) => state.wishlist || { wishlist: [] })
+
     const [selectedSize, setSelectedSize] = useState("")
-    const [selectedImage, setSelectedImage] = useState(0)
     const [pincode, setPincode] = useState("")
 
-
-    // useEffect(() => {
-    //     const fetchProduct = async () => {
-    //         try {
-    //             setLoading(true)
-    //             const productData = await productService.getProductById(id)
-    //             setProduct(productData)
-    //         } catch (error) {
-    //             toast.error("Failed to fetch product details")
-    //             console.error("Error fetching product:", error)
-    //         } finally {
-    //             setLoading(false)
-    //         }
-    //     }
-
-    //     fetchProduct()
-    // }, [id])
-
     useEffect(() => {
-        const fetchProduct = async () => {
-            try {
-                setLoading(true);
-                const response = await productService.getProductById(id); // ✅ Get the actual product data
-                setProduct(response.data); // ✅ Only the data, not the entire response
-                console.log(response);
+        dispatch(listProductDetails(id))
+        window.scrollTo(0, 0)
+        return () => dispatch(resetProductState())
+    }, [dispatch, id])
 
-            } catch (error) {
-                toast.error("Failed to fetch product details");
-                console.error("Error fetching product:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchProduct();
-    }, [id]);
-
-
-    const handleAddToBag = async () => {
+    const handleAddToBag = () => {
         if (!isAuthenticated) {
-            toast.error("Please login to add items to cart")
+            toast.error("Please login to add items to bag")
+            navigate("/login")
             return
         }
-
         if (!selectedSize) {
-            toast.error("Please select a size")
+            toast.error("Please select a size first")
             return
         }
 
-        try {
-            await addToCart(product._id, 1, selectedSize)
-        } catch (error) {
-            console.error("Error adding to cart:", error)
+        const productImage = product.images?.[0] || product.image || ""
+
+        const cartData = {
+            productId: product._id,
+            name: product.name,
+            price: product.price,
+            image: productImage,
+            qty: 1,
+            size: selectedSize
         }
+
+        dispatch(addToCart(cartData))
+            .unwrap()
+            .then(() => {
+                toast.success("Added to Bag", {
+                    icon: '🛍️',
+                    style: { borderRadius: '4px', background: '#333', color: '#fff' }
+                })
+            })
+            .catch((err) => toast.error(err || "Failed to add to bag"))
     }
 
-    const handleWishlist = async () => {
+    const handleWishlist = () => {
         if (!isAuthenticated) {
-            toast.error("Please login to add items to wishlist")
+            toast.error("Please login to use wishlist")
+            navigate("/login")
             return
         }
-
-        try {
-            if (isInWishlist(product._id)) {
-                await removeFromWishlist(product._id)
-            } else {
-                await addToWishlist(product._id)
-            }
-
-        } catch (error) {
-            console.error("Error updating wishlist:", error)
-        }
+        dispatch(toggleWishlist(product._id))
+            .unwrap()
+            .then(() => toast.success("Wishlist updated!"))
     }
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <div className="text-center">
-                    <div className="spinner mx-auto mb-4"></div>
-                    <p>Loading product details...</p>
-                </div>
-            </div>
-        )
-    }
+    const isItemInWishlist = wishlist?.some(item => item._id === product._id)
 
-    if (!product) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold mb-4">Product not found</h2>
-                    <Link to="/" className="text-pink-500 hover:underline">
-                        Go back to home
-                    </Link>
-                </div>
-            </div>
-        )
-    }
+    if (loading) return (
+        <div className="h-[80vh] flex items-center justify-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-pink-500"></div>
+        </div>
+    )
+
+    if (error) return <div className="p-20 text-center text-red-500 font-bold">{error}</div>
+    if (!product?._id) return null
+
+    // Image list logic
+    const productImages = product.images?.length > 0 ? product.images : [product.image]
 
     return (
-        <div className="min-h-screen bg-white">
-            {/* Breadcrumb */}
-            <div className="bg-gray-50 py-3">
-                <div className="container mx-auto px-4">
-                    <nav className="text-sm text-gray-600">
-                        <Link to="/" className="hover:text-pink-500">
-                            Home
-                        </Link>
-                        <span className="mx-2">/</span>
-                        {/* <Link to={`/products/${product.category || "products"}`} className="hover:text-pink-500">
-                            {product.category.name || "Products"}
-                        </Link> */}
-                        <Link to={`/products/${product.category?.slug || "products"}`}>
-                            {product.category?.name || "Products"}
-                        </Link>
-
-                        <span className="mx-2">/</span>
-                        <span className="font-medium">
-                            {product.brand} → {product.name}
-                        </span>
-                    </nav>
+        <div className="min-h-screen bg-white pb-20">
+            {/* Breadcrumbs */}
+            <div className="px-10 py-4 text-sm text-gray-500">
+                <div className="flex items-center gap-2">
+                    <Link to="/" className="hover:text-black">Home</Link> <ChevronRight size={12} />
+                    <span className="font-bold text-black uppercase">{product.brand}</span>
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-2">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Product Images */}
-                    <div className="space-y-4">
-                        <motion.div
-                            className=" bg-gray-100 rounded-lg overflow-hidden"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                        >
-                            {/* <img
-                                src={product.images[selectedImage] || "/placeholder.svg"}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                            /> */}
-                            <img
-                                src={product.images?.[selectedImage] || "/placeholder.svg"}
-                                alt={product.name || "Product Image"}
-                                className="w-full h-full object-contain"
-                            />
+            <div className="max-w-[1300px] mx-auto px-4 lg:px-10">
+                <div className="flex flex-col lg:flex-row gap-10">
 
-                        </motion.div>
-
-                        <div className="grid grid-cols-4 gap-2">
-                            {/* {product.images.map((image, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setSelectedImage(index)}
-                                    className={`aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 ${selectedImage === index ? "border-pink-500" : "border-transparent"
-                                        }`}
-                                >
-                                    <img
-                                        src={image || "/placeholder.svg"}
-                                        alt={`Product ${index + 1}`}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </button>
-                            ))} */}
-
-                            {Array.isArray(product.images) && product.images.map((image, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setSelectedImage(index)}
-                                    className={`aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 ${selectedImage === index ? "border-pink-500" : "border-transparent"
-                                        }`}
-                                >
-                                    <img
-                                        src={image || "/placeholder.svg"}
-                                        alt={`Product ${index + 1}`}
-                                        className="w-full h-48 object-cover "
-                                    />
-                                </button>
-                            ))}
-
-                        </div>
+                    {/* Left: Image Grid (Myntra Style) */}
+                    <div className="lg:w-[60%] grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {productImages.map((img, i) => (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: i * 0.1 }}
+                                key={i}
+                                className="overflow-hidden bg-gray-50 aspect-[3/4]"
+                            >
+                                <img
+                                    src={img}
+                                    alt={`view-${i}`}
+                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 cursor-zoom-in"
+                                />
+                            </motion.div>
+                        ))}
                     </div>
 
-                    {/* Product Details */}
-                    <div className="space-y-6">
-                        {/* <div>
-                            <h1 className="text-2xl font-bold text-gray-800 mb-2">{product.brand}</h1>
-                            <p className="text-gray-600 mb-4">{product.name}</p>
-
-                            <div className="flex items-center mb-4">
-                                <div className="flex items-center bg-green-100 px-2 py-1 rounded">
-                                    <span className="text-sm font-medium">{product.rating}</span>
-                                    <Star className="w-4 h-4 text-green-600 ml-1 fill-current" />
-                                </div>
-                                <span className="text-sm text-gray-500 ml-2">| {product.numReviews} Ratings</span>
-                            </div>
-                        </div> */}
-
+                    {/* Right: Info Section (Sticky) */}
+                    <div className="lg:w-[40%] lg:sticky lg:top-24 h-fit space-y-6">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-800 mb-2">{product.brand}</h1>
-                            <p className="text-gray-600 mb-4">{product.name}</p>
+                            <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-tight">{product.brand}</h1>
+                            <p className="text-xl text-gray-500 font-medium">{product.name}</p>
 
-                            <div className="flex items-center mb-4">
-                                <div className="flex items-center bg-green-100 px-2 py-1 rounded">
-                                    <span className="text-sm font-medium">{product.rating}</span>
-                                    <Star className="w-4 h-4 text-green-600 ml-1 fill-current" />
-                                </div>
-                                <span className="text-sm text-gray-500 ml-2">
-                                    | {product.reviews?.length} Ratings
-
-                                </span>
+                            {/* Rating */}
+                            <div className="inline-flex items-center mt-4 px-3 py-1 border border-gray-200 rounded-sm font-bold text-sm bg-white hover:border-gray-400 transition-all cursor-pointer">
+                                {product.rating} <Star size={14} className="ml-1 fill-green-600 text-green-600" />
+                                <span className="ml-2 text-gray-400 font-normal border-l pl-2"> {product.numReviews} Ratings</span>
                             </div>
                         </div>
 
+                        <hr className="border-gray-100" />
 
                         {/* Price */}
-                        {/* <div className="border-b pb-4">
-                            <div className="flex items-center space-x-3">
-                                <span className="text-2xl font-bold">₹{product.price}</span>
-                                <span className="text-lg text-gray-500 line-through">MRP ₹{product.originalPrice}</span>
-                                <span className="text-lg text-orange-500 font-medium">({product.discount}% OFF)</span>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl font-bold text-gray-800">₹{product.price}</span>
+                                <span className="text-xl text-gray-400 line-through font-light">MRP ₹{product.originalPrice || product.price + 500}</span>
+                                <span className="text-xl text-orange-500 font-bold">({product.discount || 20}% OFF)</span>
                             </div>
-                            <p className="text-sm text-green-600 mt-1">inclusive of all taxes</p>
-                        </div> */}
-
-                        {product?.price && (
-                            <div className="border-b pb-4">
-                                <div className="flex items-center space-x-3">
-                                    <span className="text-2xl font-bold">₹{product.price}</span>
-                                    {product.originalPrice && (
-                                        <span className="text-lg text-gray-500 line-through">
-                                            MRP ₹{product.originalPrice}
-                                        </span>
-                                    )}
-                                    {product.discount && (
-                                        <span className="text-lg text-orange-500 font-medium">
-                                            ({product.discount}% OFF)
-                                        </span>
-                                    )}
-                                </div>
-                                <p className="text-sm text-green-600 mt-1">inclusive of all taxes</p>
-                            </div>
-                        )}
-
+                            <p className="text-green-600 font-bold text-xs">inclusive of all taxes</p>
+                        </div>
 
                         {/* Size Selection */}
-                        <div>
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="font-medium">SELECT SIZE</h3>
-                                <button className="text-pink-500 text-sm hover:underline">SIZE CHART →</button>
+                        {/* Size Selection Section */}
+                        <div className="space-y-4 pt-2">
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-bold text-gray-800 text-sm">SELECT SIZE</h3>
+                                <button className="text-pink-500 font-bold text-xs hover:underline uppercase">Size Chart</button>
                             </div>
                             <div className="flex flex-wrap gap-3">
-                                {/* {product.sizes.map((sizeOption) => (
+                                {product.sizes?.map((s) => (
                                     <button
-                                        key={sizeOption.size}
-                                        onClick={() => sizeOption.available && setSelectedSize(sizeOption.size)}
-                                        disabled={!sizeOption.available}
-                                        className={`px-4 py-2 border rounded-lg text-sm font-medium ${selectedSize === sizeOption.size
-                                            ? "border-pink-500 bg-pink-50 text-pink-500"
-                                            : sizeOption.available
-                                                ? "border-gray-300 hover:border-gray-400"
-                                                : "border-gray-200 text-gray-400 cursor-not-allowed line-through"
-                                            }`}
+                                        key={s.size}
+                                        disabled={!s.available}
+                                        onClick={() => setSelectedSize(s.size)}
+                                        className={`
+                    /* ✅ Circle Fix: Fixed height but flexible min-width */
+                    h-12 min-w-[3rem] px-2 rounded-full border flex items-center justify-center 
+                    text-sm font-bold transition-all duration-200
+                    
+                    /* Active/Selected State */
+                    ${selectedSize === s.size
+                                                ? 'border-pink-500 text-pink-500 ring-1 ring-pink-500 bg-pink-50'
+                                                : 'border-gray-300 hover:border-pink-500 text-gray-700'}
+                    
+                    /* Out of Stock State */
+                    ${!s.available ? 'bg-gray-50 text-gray-300 border-gray-200 cursor-not-allowed' : 'cursor-pointer'}
+                `}
                                     >
-                                        {sizeOption.size}
-                                    </button>
-                                ))} */}
-
-                                {Array.isArray(product.sizes) && product.sizes.map((sizeOption) => (
-                                    <button
-                                        key={sizeOption.size}
-                                        onClick={() => sizeOption.available && setSelectedSize(sizeOption.size)}
-                                        disabled={!sizeOption.available}
-                                        className={`px-4 py-2 border rounded-lg text-sm font-medium ${selectedSize === sizeOption.size
-                                            ? "border-pink-500 bg-pink-50 text-pink-500"
-                                            : sizeOption.available
-                                                ? "border-gray-300 hover:border-gray-400"
-                                                : "border-gray-200 text-gray-400 cursor-not-allowed line-through"
-                                            }`}
-                                    >
-                                        {sizeOption.size}
+                                        {/* Agar size "Out of Stock" hai toh Myntra style mein diagonal line dikhane ke liye */}
+                                        <span className="relative">
+                                            {s.size}
+                                            {!s.available && (
+                                                <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gray-300 -rotate-45"></div>
+                                            )}
+                                        </span>
                                     </button>
                                 ))}
-
                             </div>
                         </div>
 
-                        {/* Add to Bag */}
-                        <div className="flex space-x-4">
-                            <motion.button
+                        {/* Primary Actions */}
+                        <div className="flex gap-4 pt-4">
+                            <button
                                 onClick={handleAddToBag}
-                                className="flex-1 bg-pink-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-pink-600 transition-colors flex items-center justify-center"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
+                                className="flex-[1.5] bg-pink-500 text-white py-4 rounded font-bold flex items-center justify-center gap-3 hover:bg-pink-600 transition-all uppercase"
                             >
-                                🛍️ ADD TO BAG
-                            </motion.button>
-                            <motion.button
+                                <ShoppingBag size={20} /> Add to Bag
+                            </button>
+
+                            <button
                                 onClick={handleWishlist}
-                                className={`px-6 py-3 border rounded-lg font-medium transition-colors flex items-center ${isInWishlist(product._id)
-                                    ? "border-pink-500 text-pink-500 bg-pink-50"
-                                    : "border-gray-300 text-gray-700 hover:border-gray-400"
-                                    }`}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
+                                className={`flex-1 border border-gray-300 py-4 rounded font-bold flex items-center justify-center gap-3 transition-all uppercase
+                                    ${isItemInWishlist ? 'bg-gray-800 text-white border-gray-800' : 'hover:border-black text-gray-800'}
+                                `}
                             >
-                                <Heart className={`w-5 h-5 mr-2 ${isInWishlist(product._id) ? "fill-current" : ""}`} />
-                                WISHLIST
-                            </motion.button>
+                                <Heart size={20} className={isItemInWishlist ? 'fill-white' : ''} />
+                                {isItemInWishlist ? 'Wishlisted' : 'Wishlist'}
+                            </button>
                         </div>
 
-                        {/* Delivery Options */}
-                        <div className="border-t pt-4">
-                            <div className="flex items-center mb-3">
-                                <Truck className="w-5 h-5 mr-2" />
-                                <h3 className="font-medium">DELIVERY OPTIONS</h3>
-                            </div>
-                            <div className="flex space-x-2 mb-3">
+                        {/* Delivery Section */}
+                        <div className="space-y-4 pt-6">
+                            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <Truck size={18} /> DELIVERY OPTIONS
+                            </h3>
+                            <div className="relative border border-gray-200 rounded max-w-xs">
                                 <input
                                     type="text"
                                     placeholder="Enter pincode"
+                                    className="w-full p-3 pr-16 text-sm outline-none"
                                     value={pincode}
                                     onChange={(e) => setPincode(e.target.value)}
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                                 />
-                                <button className="px-4 py-2 text-pink-500 border border-pink-500 rounded-lg hover:bg-pink-50">
-                                    Check
-                                </button>
+                                <button className="absolute right-3 top-3 text-pink-500 font-bold text-sm">Check</button>
                             </div>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Please enter PIN code to check delivery time & Pay on Delivery Availability
-                            </p>
-
-                            <div className="space-y-2 text-sm">
-                                <div className="flex items-center">
-                                    <Shield className="w-4 h-4 mr-2 text-green-600" />
-                                    <span>100% Original Products</span>
-                                </div>
-                                <div className="flex items-center">
-                                    <Truck className="w-4 h-4 mr-2 text-blue-600" />
-                                    <span>Pay on delivery might be available</span>
-                                </div>
-                                <div className="flex items-center">
-                                    <RotateCcw className="w-4 h-4 mr-2 text-orange-600" />
-                                    <span>Easy 7 days returns and exchanges</span>
-                                </div>
-                            </div>
+                            <p className="text-xs text-gray-500">Please enter PIN code to check delivery time</p>
                         </div>
 
-                        {/* Product Description */}
-                        <div className="border-t pt-4">
-                            <h3 className="font-medium mb-2">PRODUCT DETAILS</h3>
-                            <p className="text-sm text-gray-600">{product.description}</p>
+                        {/* Product Info Bullet Points */}
+                        <div className="space-y-3 pt-6 border-t border-gray-100">
+                            <div className="flex items-center gap-3 text-sm">
+                                <Shield size={18} className="text-gray-400" />
+                                <span>100% Original Products</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-sm">
+                                <RotateCcw size={18} className="text-gray-400" />
+                                <span>Easy 7 days returns and exchanges</span>
+                            </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
