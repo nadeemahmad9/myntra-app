@@ -1,26 +1,44 @@
-const express = require("express")
-const {
-  authUser,
-  registerUser,
-  getUserProfile,
-  updateUserProfile,
-  getUsers,
-  deleteUser,
-  getUserById,
-  updateUser,
-  googleAuth,
-} = require("../controllers/userController")
-const { protect, admin } = require("../middleware/authMiddleware")
+import express from "express";
+import {
+    authUser,
+    registerUser,
+    getUserProfile,
+    updateUserProfile,
+    getUsers,
+    deleteUser,
+    getUserById,
+    updateUser,
+    googleAuth,
+    logout,
+    addUserAddress,
+    deleteAddress,
+    updateAddress
+} from "../controllers/userController.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
-const router = express.Router()
+const router = express.Router();
 
+// Public Routes
+router.post("/", registerUser);
+router.post("/login", authUser);
+router.post("/google", googleAuth);
+router.get("/logout", logout);
+// userRoutes.js
+router.route("/address").post(protect, addUserAddress);
 
+// Private Routes (Logged in users only)
+router.route("/profile")
+    .get(protect, getUserProfile)
+    .put(protect, updateUserProfile);
 
-router.route("/").post(registerUser).get(protect, admin, getUsers)
-router.post("/login", authUser)
-router.route("/profile").get(protect, getUserProfile).put(protect, updateUserProfile)
-router.post("/google", googleAuth); // ✅ add this line above "/:id" route
+// Admin Routes (Admin only)
+router.route("/")
+    .get(protect, admin, getUsers);
 
-router.route("/:id").delete(protect, admin, deleteUser).get(protect, admin, getUserById).put(protect, admin, updateUser)
+router.route("/:id")
+    .get(protect, admin, getUserById)
+    .put(protect, admin, updateUser)
+    .delete(protect, admin, deleteUser);
+router.route("/address/:id").delete(protect, deleteAddress).put(protect, updateAddress)
 
-module.exports = router
+export default router;

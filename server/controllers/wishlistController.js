@@ -1,63 +1,75 @@
-const asyncHandler = require("express-async-handler")
-const Wishlist = require("../models/wishlistModel")
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import Wishlist from "../models/wishlistModel.js";
+import Product from "../models/productModel.js";
 
-// @desc    Get user wishlist
-// @route   GET /api/wishlist
-// @access  Private
+/**
+ * @desc    Get user wishlist with populated product details
+ * @route   GET /api/wishlist
+ * @access  Private
+ */
 const getWishlist = asyncHandler(async (req, res) => {
-  const wishlist = await Wishlist.findOne({ user: req.user._id }).populate("products")
+    const wishlist = await Wishlist.findOne({ user: req.user._id }).populate({
+        path: "products",
+        select: "name price images brand countInStock" // Sirf zaroori fields fetch karein
+    });
 
-  if (wishlist) {
-    res.json(wishlist.products)
-  } else {
-    res.json([])
-  }
-})
+    res.status(200).json({
+        success: true,
+        wishlist: wishlist ? wishlist.products : []
+    });
+});
 
-// @desc    Add item to wishlist
-// @route   POST /api/wishlist
-// @access  Private
+/**
+ * @desc    Add item to wishlist (using Atomic Operators)
+ * @route   POST /api/wishlist
+ */
 const addToWishlist = asyncHandler(async (req, res) => {
-  const { productId } = req.body
+    const { productId } = req.body;
 
-  let wishlist = await Wishlist.findOne({ user: req.user._id })
+    // Validate if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+        throw new ApiError(404, "Product not found");
+    }
 
-  if (!wishlist) {
-    wishlist = new Wishlist({
-      user: req.user._id,
-      products: [],
-    })
-  }
+    // 2+ Year Exp Touch: findOneAndUpdate with $addToSet
+    // $addToSet ensure karta hai ki duplicate item add na ho, bina manual loop ke
+    const wishlist = await Wishlist.findOneAndUpdate(
+        { user: req.user._id },
+        { $addToSet: { products: productId } },
+        { upsert: true, new: true } // Agar wishlist nahi hai toh create kar do
+    ).populate("products");
 
-  if (!wishlist.products.includes(productId)) {
-    wishlist.products.push(productId)
-    await wishlist.save()
-  }
+    res.status(201).json({
+        success: true,
+        wishlist: wishlist.products,
+        message: "Product added to wishlist"
+    });
+});
 
-  const populatedWishlist = await Wishlist.findById(wishlist._id).populate("products")
-  res.json(populatedWishlist.products)
-})
-
-// @desc    Remove item from wishlist
-// @route   DELETE /api/wishlist/:id
-// @access  Private
+/**
+ * @desc    Remove item from wishlist (using $pull)
+ * @route   DELETE /api/wishlist/:id
+ */
 const removeFromWishlist = asyncHandler(async (req, res) => {
-  const wishlist = await Wishlist.findOne({ user: req.user._id })
+    // 2+ Year Exp Touch: $pull operator for atomic removal
+    // Database level par delete karna fast aur secure hota hai
+    const wishlist = await Wishlist.findOneAndUpdate(
+        { user: req.user._id },
+        { $pull: { products: req.params.id } },
+        { new: true }
+    ).populate("products");
 
-  if (wishlist) {
-    wishlist.products = wishlist.products.filter((x) => x.toString() !== req.params.id)
-    await wishlist.save()
+    if (!wishlist) {
+        throw new ApiError(404, "Wishlist not found");
+    }
 
-    const populatedWishlist = await Wishlist.findById(wishlist._id).populate("products")
-    res.json(populatedWishlist.products)
-  } else {
-    res.status(404)
-    throw new Error("Wishlist not found")
-  }
-})
+    res.status(200).json({
+        success: true,
+        wishlist: wishlist.products,
+        message: "Product removed from wishlist"
+    });
+});
 
-module.exports = {
-  getWishlist,
-  addToWishlist,
-  removeFromWishlist,
-}
+export { getWishlist, addToWishlist, removeFromWishlist };

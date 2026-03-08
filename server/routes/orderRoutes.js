@@ -1,20 +1,38 @@
-const express = require("express")
-const {
-  addOrderItems,
-  getOrderById,
-  updateOrderToPaid,
-  updateOrderToDelivered,
-  getMyOrders,
-  getOrders,
-} = require("../controllers/orderController")
-const { protect, admin } = require("../middleware/authMiddleware")
+import express from "express";
+import {
+    addOrderItems,
+    getOrderById,
+    updateOrderToPaid,
+    updateOrderToDelivered,
+    getMyOrders,
+    getOrders,
+} from "../controllers/orderController.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
-const router = express.Router()
+const router = express.Router();
 
-router.route("/").post(protect, addOrderItems).get(protect, admin, getOrders)
-router.route("/myorders").get(protect, getMyOrders)
-router.route("/:id").get(protect, getOrderById)
-router.route("/:id/pay").put(protect, updateOrderToPaid)
-router.route("/:id/deliver").put(protect, admin, updateOrderToDelivered)
+/**
+ * @route   /api/orders
+ * Experienced Dev Touch: protect middleware ko upar se lagana bajaye har line mein repeat karne ke
+ */
 
-module.exports = router
+// Saare niche waale routes ko login (protect) zaroori hai
+router.use(protect);
+
+router.route("/")
+    .post(addOrderItems)              // Create new order
+    .get(admin, getOrders);           // Admin: Get all orders
+
+router.route("/mine")
+    .get(getMyOrders);                // User: Get logged in user orders
+
+router.route("/:id")
+    .get(getOrderById);               // Get order by ID
+
+router.route("/:id/pay")
+    .put(updateOrderToPaid);          // Update order status to paid
+
+router.route("/:id/deliver")
+    .put(admin, updateOrderToDelivered); // Admin: Update order status to delivered
+
+export default router;

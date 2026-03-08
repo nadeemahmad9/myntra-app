@@ -1,199 +1,194 @@
-const asyncHandler = require("express-async-handler")
-const Product = require("../models/productModel")
 
 
 
-const getProductsBySubcategory = async (req, res) => {
-  try {
-    const { subcategory } = req.params
-    const products = await Product.find({ subcategory })
-    res.json(products)
-  } catch (error) {
-    console.error("Failed to fetch products by subcategory", error)
-    res.status(500).json({ message: "Server error" })
-  }
-}
-// @desc    Fetch all products
-// @route   GET /api/products
-// @access  Public
 
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import Product from "../models/productModel.js";
+
+/**
+ * @desc    Fetch all products with advanced filtering, search & pagination
+ * @route   GET /api/products
+ * @access  Public
+ */
 const getProducts = asyncHandler(async (req, res) => {
-  const pageSize = 12
-  const page = Number(req.query.pageNumber) || 1
+    const pageSize = Number(req.query.pageSize) || 12;
+    const page = Number(req.query.pageNumber) || 1;
 
-  const keyword = req.query.search
-    ? {
-        $or: [
-          { name: { $regex: req.query.search, $options: "i" } },
-          { brand: { $regex: req.query.search, $options: "i" } },
-          { category: { $regex: req.query.search, $options: "i" } },
-        ],
-      }
-    : {}
+    // Search query logic (Advanced: searching in multiple fields)
+    const keyword = req.query.search
+        ? {
+            $or: [
+                { name: { $regex: req.query.search, $options: "i" } },
+                { brand: { $regex: req.query.search, $options: "i" } },
+                { category: { $regex: req.query.search, $options: "i" } },
+            ],
+        }
+        : {};
 
-  const category = req.query.category ? { category: req.query.category } : {}
-  const featured = req.query.featured ? { isFeatured: true } : {}
+    // Filters logic
+    const categoryFilter = req.query.category ? { category: req.query.category } : {};
+    const subcategoryFilter = req.query.subcategory ? { subcategory: req.query.subcategory } : {};
+    const featuredFilter = req.query.featured ? { isFeatured: true } : {};
 
-  const count = await Product.countDocuments({ ...keyword, ...category, ...featured })
-  const products = await Product.find({ ...keyword, ...category, ...featured })
-    .limit(pageSize)
-    .skip(pageSize * (page - 1))
+    // Combine all filters
+    const filters = { ...keyword, ...categoryFilter, ...subcategoryFilter, ...featuredFilter };
 
-  res.json({ products, page, pages: Math.ceil(count / pageSize) })
-})
+    const count = await Product.countDocuments(filters);
+    const products = await Product.find(filters)
+        .sort({ createdAt: -1 }) // Newest first
+        .limit(pageSize)
+        .skip(pageSize * (page - 1));
 
-// @desc    Fetch single product
-// @route   GET /api/products/:id
-// @access  Public
-// const getProductById = asyncHandler(async (req, res) => {
-//   const product = await Product.findById(req.params.id)
+    res.status(200).json({
+        success: true,
+        products,
+        page,
+        pages: Math.ceil(count / pageSize),
+        totalProducts: count
+    });
+});
 
-//   if (product) {
-//     res.json(product)
-//   } else {
-//     res.status(404)
-//     throw new Error("Product not found")
-//   }
-// })
-
-const getProductById = async (req, res) => {
-  try {
+/**
+ * @desc    Fetch single product by ID
+ * @route   GET /api/products/:id
+ */
+const getProductById = asyncHandler(async (req, res) => {
     const product = await Product.findById(req.params.id);
-    if (product) {
-      res.json(product); // ✅ Make sure this returns full object
-    } else {
-      res.status(404).json({ message: "Product not found" });
+
+    if (!product) {
+        throw new ApiError(404, "Product not found");
     }
-  } catch (error) {
-    res.status(500).json({ message: "Server Error" });
-  }
-};
 
-// @desc    Delete a product
-// @route   DELETE /api/products/:id
-// @access  Private/Admin
-const deleteProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id)
+    res.status(200).json({
+        success: true,
+        product
+    });
+});
 
-  if (product) {
-    await Product.findByIdAndDelete(req.params.id)
-    res.json({ message: "Product removed" })
-  } else {
-    res.status(404)
-    throw new Error("Product not found")
-  }
-})
-
-
-// @desc    Create a product
-// @route   POST /api/products
-// @access  Private/Admin
+/**
+ * @desc    Create a product (Admin only)
+ */
 const createProduct = asyncHandler(async (req, res) => {
-  const { name, brand, description, images, category, subcategory, price, originalPrice, countInStock, sizes } =
-    req.body
+    const { name, brand, description, images, category, subcategory, price, originalPrice, countInStock, sizes } = req.body;
 
-  const product = new Product({
-    name,
-    brand,
-    description,
-    images,
-    category,
-    subcategory,
-    price,
-    originalPrice,
-    discount: Math.round(((originalPrice - price) / originalPrice) * 100),
-    countInStock,
-    sizes,
-    numReviews: 0,
-  })
+    // Auto-calculate discount percentage
+    const discount = originalPrice > price 
+        ? Math.round(((originalPrice - price) / originalPrice) * 100) 
+        : 0;
 
-  const createdProduct = await product.save()
-  res.status(201).json(createdProduct)
-})
+    const product = new Product({
+        user: req.user._id, // Adding owner info
+        name,
+        brand,
+        description,
+        images,
+        category,
+        subcategory,
+        price,
+        originalPrice,
+        discount,
+        countInStock,
+        sizes,
+        numReviews: 0,
+    });
 
-// @desc    Update a product
-// @route   PUT /api/products/:id
-// @access  Private/Admin
+    const createdProduct = await product.save();
+    res.status(201).json({ success: true, product: createdProduct });
+});
+
+/**
+ * @desc    Update a product (Admin only)
+ */
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, brand, description, images, category, subcategory, price, originalPrice, countInStock, sizes } =
-    req.body
+    const { name, brand, description, images, category, subcategory, price, originalPrice, countInStock, sizes } = req.body;
 
-  const product = await Product.findById(req.params.id)
+    const product = await Product.findById(req.params.id);
 
-  if (product) {
-    product.name = name
-    product.brand = brand
-    product.description = description
-    product.images = images
-    product.category = category
-    product.subcategory = subcategory
-    product.price = price
-    product.originalPrice = originalPrice
-    product.discount = Math.round(((originalPrice - price) / originalPrice) * 100)
-    product.countInStock = countInStock
-    product.sizes = sizes
+    if (!product) {
+        throw new ApiError(404, "Product not found");
+    }
 
-    const updatedProduct = await product.save()
-    res.json(updatedProduct)
-  } else {
-    res.status(404)
-    throw new Error("Product not found")
-  }
-})
+    product.name = name || product.name;
+    product.brand = brand || product.brand;
+    product.description = description || product.description;
+    product.images = images || product.images;
+    product.category = category || product.category;
+    product.subcategory = subcategory || product.subcategory;
+    product.price = price || product.price;
+    product.originalPrice = originalPrice || product.originalPrice;
+    product.countInStock = countInStock || product.countInStock;
+    product.sizes = sizes || product.sizes;
+    
+    // Recalculate discount
+    product.discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
 
-// @desc    Create new review
-// @route   POST /api/products/:id/reviews
-// @access  Private
+    const updatedProduct = await product.save();
+    res.status(200).json({ success: true, product: updatedProduct });
+});
+
+/**
+ * @desc    Delete a product (Admin only)
+ */
+const deleteProduct = asyncHandler(async (req, res) => {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+        throw new ApiError(404, "Product not found");
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
+    res.status(200).json({ success: true, message: "Product removed successfully" });
+});
+
+/**
+ * @desc    Create new review
+ */
 const createProductReview = asyncHandler(async (req, res) => {
-  const { rating, comment } = req.body
+    const { rating, comment } = req.body;
+    const product = await Product.findById(req.params.id);
 
-  const product = await Product.findById(req.params.id)
+    if (!product) {
+        throw new ApiError(404, "Product not found");
+    }
 
-  if (product) {
-    const alreadyReviewed = product.reviews.find((r) => r.user.toString() === req.user._id.toString())
+    const alreadyReviewed = product.reviews.find(
+        (r) => r.user.toString() === req.user._id.toString()
+    );
 
     if (alreadyReviewed) {
-      res.status(400)
-      throw new Error("Product already reviewed")
+        throw new ApiError(400, "You have already reviewed this product");
     }
 
     const review = {
-      name: req.user.name,
-      rating: Number(rating),
-      comment,
-      user: req.user._id,
-    }
+        name: req.user.name,
+        rating: Number(rating),
+        comment,
+        user: req.user._id,
+    };
 
-    product.reviews.push(review)
+    product.reviews.push(review);
+    product.numReviews = product.reviews.length;
+    product.rating = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
 
-    product.numReviews = product.reviews.length
+    await product.save();
+    res.status(201).json({ success: true, message: "Review added" });
+});
 
-    product.rating = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length
-
-    await product.save()
-    res.status(201).json({ message: "Review added" })
-  } else {
-    res.status(404)
-    throw new Error("Product not found")
-  }
-})
-
-// @desc    Get top rated products
-// @route   GET /api/products/top
-// @access  Public
+/**
+ * @desc    Get top rated products
+ */
 const getTopProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find({}).sort({ rating: -1 }).limit(3)
+    const products = await Product.find({}).sort({ rating: -1 }).limit(5);
+    res.status(200).json({ success: true, products });
+});
 
-  res.json(products)
-})
-
-module.exports = {
-  getProducts,
-  getProductById,
-  deleteProduct,
-  createProduct,
-  updateProduct,
-  createProductReview,
-  getTopProducts,
-  getProductsBySubcategory,
-}
+export {
+    getProducts,
+    getProductById,
+    deleteProduct,
+    createProduct,
+    updateProduct,
+    createProductReview,
+    getTopProducts
+};

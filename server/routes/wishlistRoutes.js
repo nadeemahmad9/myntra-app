@@ -1,10 +1,26 @@
-const express = require("express")
-const { getWishlist, addToWishlist, removeFromWishlist } = require("../controllers/wishlistController")
-const { protect } = require("../middleware/authMiddleware")
+import express from "express";
+import {
+    getWishlist,
+    addToWishlist,
+    removeFromWishlist
+} from "../controllers/wishlistController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
-const router = express.Router()
+const router = express.Router();
 
-router.route("/").get(protect, getWishlist).post(protect, addToWishlist)
-router.route("/:id").delete(protect, removeFromWishlist)
+/**
+ * @route   /api/wishlist
+ * Experienced Dev Touch: Centralized protection middleware for all user-specific resources
+ */
 
-module.exports = router
+// Wishlist ke saare operations ke liye login hona zaroori hai
+router.use(protect);
+
+router.route("/")
+    .get(getWishlist)      // User ki saved wishlist fetch karne ke liye
+    .post(addToWishlist);  // Naya product wishlist mein add karne ke liye
+
+router.route("/:id")
+    .delete(removeFromWishlist); // Wishlist se item remove karne ke liye
+
+export default router;

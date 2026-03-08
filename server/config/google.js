@@ -1,7 +1,7 @@
-const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const User = require("../models/userModel");
-const dotenv = require("dotenv");
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import User from "../models/userModel.js";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -11,8 +11,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
-    scope: ["profile", "email"]
-
+      scope: ["profile", "email"],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -29,7 +28,9 @@ passport.use(
           user = await User.create({
             name: profile.displayName,
             email: email,
-            password: "google-oauth", // placeholder since Google handles auth
+            // 2+ Year Exp Tip: Password ko random string rakhein taaki hashing middleware 
+            // isse normal login ki tarah treat na kare
+            password: Math.random().toString(36).slice(-10), 
             profilePic: profile.photos?.[0]?.value || "",
           });
         } else {
@@ -40,9 +41,9 @@ passport.use(
           }
         }
 
-        done(null, user);
+        return done(null, user);
       } catch (err) {
-        done(err, null);
+        return done(err, null);
       }
     }
   )
@@ -63,4 +64,4 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-module.exports = passport;
+export default passport; // ✅ Changed from module.exports

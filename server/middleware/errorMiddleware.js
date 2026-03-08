@@ -1,16 +1,32 @@
+import { ApiError } from "../utils/ApiError.js";
+
+// @desc    Handle 404 - Not Found Routes
 const notFound = (req, res, next) => {
-  const error = new Error(`Not Found - ${req.originalUrl}`)
-  res.status(404)
-  next(error)
-}
+    const error = new ApiError(404, `Not Found - ${req.originalUrl}`);
+    next(error);
+};
 
+// @desc    Main Error Handler (Standard & Custom Errors)
 const errorHandler = (err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode
-  res.status(statusCode)
-  res.json({
-    message: err.message,
-    stack: process.env.NODE_ENV === "production" ? null : err.stack,
-  })
-}
+    let error = err;
 
-module.exports = { notFound, errorHandler }
+    // Agar error hamari custom ApiError class ka nahi hai (jaise Mongoose error)
+    if (!(error instanceof ApiError)) {
+        const statusCode = error.statusCode || (error.name === "ValidationError" ? 400 : 500);
+        const message = error.message || "Something went wrong";
+        error = new ApiError(statusCode, message, error?.errors || [], err.stack);
+    }
+
+    const response = {
+        success: false,
+        message: error.message,
+        errors: error.errors || [],
+        ...(process.env.NODE_ENV === "development" ? { stack: error.stack } : {}),
+    };
+
+    // Experienced Dev Touch: Production mein status codes aur response format consistent rakhna
+    res.status(error.statusCode || 500).json(response);
+};
+
+// ✅ Dono ko export karna zaroori hai
+export { notFound, errorHandler };

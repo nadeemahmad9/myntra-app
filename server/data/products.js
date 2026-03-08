@@ -1058,21 +1058,21 @@ const products = [
 
   // Kids Products
   {
-    name: "Boys Cotton T-Shirt",
-    brand: "MOTHERCARE",
-    price: 399,
-    originalPrice: 799,
-    discount: 50,
-    rating: 4.0,
-    reviews: 67,
-    image: "/placeholder.svg?height=300&width=250",
+    name: "Boys Brand Logo Printed Round Neck T-shirt",
+    brand: "U.S. Polo Assn. Kids",
+    price: 959,
+    originalPrice: 1199,
+    discount: 20,
+    rating: 5.0,
+    reviews: 167,
+    image: "https://assets.myntassets.com/h_720,q_90,w_540/v1/assets/images/2025/MAY/6/HfSEwlND_03c11d05186a4ae3a39059af1855064d.jpg",
     images: [
-      "/placeholder.svg?height=600&width=400",
-      "/placeholder.svg?height=600&width=400",
-      "/placeholder.svg?height=600&width=400",
-      "/placeholder.svg?height=600&width=400",
+      "https://assets.myntassets.com/h_720,q_90,w_540/v1/assets/images/2025/MAY/6/HfSEwlND_03c11d05186a4ae3a39059af1855064d.jpg",
+      "https://assets.myntassets.com/h_720,q_90,w_540/v1/assets/images/2025/MAY/6/NGoFdGlk_5fa781fbeffb451db9722b236a147d08.jpg",
+      "https://assets.myntassets.com/h_720,q_90,w_540/v1/assets/images/2025/MAY/6/GTAtZWHo_1e8912546a05412fbb6b5ff5181425f3.jpg",
+      "https://assets.myntassets.com/h_720,q_90,w_540/v1/assets/images/2025/MAY/6/L9lZ7GP7_a3740c3a62914b8087ea96015bd075c3.jpg",
     ],
-    colors: ["Blue", "Red", "Green"],
+    colors: ["Black"],
     category: "kids",
     subcategory: "boys-clothing",
     sizes: [
@@ -1081,9 +1081,10 @@ const products = [
       { size: "4-5Y", available: true },
       { size: "5-6Y", available: false },
     ],
-    description: "Comfortable cotton t-shirt for boys",
+    description: "Black t-shirt for boys Brand logo Regular length Round neck Short sleeves Knitted",
   },
 
+  
   // Beauty Products
   {
     name: "Lakme Moisturizing Cream",
@@ -1999,7 +2000,7 @@ const products = [
   ],
   colors: ["Black"],
   category: "kids",
-  subcategory: "shorts",
+  subcategory: "kids-shorts",
   sizes: [
     { size: "XS", available: true },
     { size: "S", available: true },
@@ -2025,7 +2026,7 @@ const products = [
   ],
   colors: ["Blue", "Grey"],
   category: "kids",
-  subcategory: "shorts",
+  subcategory: "kids-shorts",
   sizes: [
     { size: "XS", available: true },
     { size: "S", available: true },
@@ -2052,7 +2053,7 @@ const products = [
   ],
   colors: ["Blue","White"],
   category: "kids",
-  subcategory: "shorts",
+  subcategory: "kids-shorts",
   sizes: [
     { size: "8-9Y", available: true },
     { size: "10-11Y", available: true },
@@ -2078,7 +2079,7 @@ const products = [
   ],
   colors: ["Blue"],
   category: "kids",
-  subcategory: "shorts",
+  subcategory: "kids-shorts",
   sizes: [
     { size: "8-9Y", available: true },
     { size: "10-11Y", available: true },
@@ -2103,7 +2104,7 @@ const products = [
   ],
   colors: ["Blue"],
   category: "kids",
-  subcategory: "shorts",
+  subcategory: "kids-shorts",
   sizes: [
     { size: "8-9Y", available: true },
     { size: "10-11Y", available: true },

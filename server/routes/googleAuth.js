@@ -1,76 +1,56 @@
-const express = require("express");
-const passport = require("passport");
-const jwt = require("jsonwebtoken");
-const { protect } = require("../middleware/authMiddleware");
-const User = require("../models/userModel");
+import express from "express";
+import passport from "passport";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import User from "../models/userModel.js";
 
 const router = express.Router();
 
-// @desc   Start Google login
+// @desc    Start Google login
 router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+    "/google",
+    passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
-// @desc   Google callback
+// @desc    Google callback
+// Senior Dev Touch: Token ko URL mein nahi, Cookie mein bhejna
 router.get(
-  "/google/callback",
-  passport.authenticate("google", { session: false }),
-  async (req, res) => {
-    try {
-      // Find existing user by email
-      let user = await User.findOne({ email: req.user.email });
+    "/google/callback",
+    passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+    asyncHandler(async (req, res) => {
+        // req.user Passport se aata hai
+        let user = await User.findOne({ email: req.user.email });
 
-      if (!user) {
-        // Create a new user if not found
-        user = await User.create({
-          name: req.user.name,
-          email: req.user.email,
-          password: "google-oauth", // placeholder password
-          profilePic: req.user.profilePic || null,
-        });
-      } else {
-        // Update profile picture if changed or missing
-        if (req.user.profilePic && user.profilePic !== req.user.profilePic) {
-          user.profilePic = req.user.profilePic;
-          await user.save();
+        if (!user) {
+            user = await User.create({
+                name: req.user.displayName || req.user.name,
+                email: req.user.email,
+                password: Math.random().toString(36).slice(-10), // Secure random password
+                profilePic: req.user.photos?.[0]?.value || req.user.profilePic,
+            });
+        } else {
+            // Update profile pic if changed
+            const newPic = req.user.photos?.[0]?.value || req.user.profilePic;
+            if (newPic && user.profilePic !== newPic) {
+                user.profilePic = newPic;
+                await user.save();
+            }
         }
-      }
 
-      // Generate JWT
-      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-        expiresIn: "20d",
-      });
+        // Generate JWT using our model method
+        const token = user.generateToken();
 
-      // Redirect to frontend with token
-res.redirect(`${process.env.frontend_Url}/login?token=${token}`);
+        // Cookie options
+        const options = {
+            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+        };
 
-    } catch (err) {
-      console.error("Google callback error:", err);
-      res.redirect(`${process.env.frontend_Url}/login?error=google_auth_failed}`);
-    }
-  }
+        // Redirect with Cookie (Secure Way)
+        res.cookie("token", token, options)
+           .redirect(`${process.env.FRONTEND_URL}/dashboard`); 
+    })
 );
 
-// @desc   Get logged-in Google user
-router.get("/google/user", protect, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.json(req.user); // full user object without password
-  } catch (err) {
-    console.error("Error fetching Google user:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// @desc   Logout
-router.get("/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) return res.status(500).json({ message: "Logout error" });
-    res.redirect("/");
-  });
-});
-
-module.exports = router;
+export default router;

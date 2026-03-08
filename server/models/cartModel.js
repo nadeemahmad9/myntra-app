@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+import mongoose from "mongoose"; // ✅ Changed from 'require'
 
 const cartItemSchema = mongoose.Schema({
   product: {
@@ -27,7 +27,7 @@ const cartItemSchema = mongoose.Schema({
     type: String,
     required: true,
   },
-})
+});
 
 const cartSchema = mongoose.Schema(
   {
@@ -40,9 +40,9 @@ const cartSchema = mongoose.Schema(
   },
   {
     timestamps: true,
-  },
-)
+  }
+);
 
-const Cart = mongoose.model("Cart", cartSchema)
+const Cart = mongoose.model("Cart", cartSchema);
 
-module.exports = Cart
+export default Cart; // ✅ Changed from 'module.exports'
