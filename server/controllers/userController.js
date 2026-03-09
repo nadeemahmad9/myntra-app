@@ -224,6 +224,20 @@ const addUserAddress = asyncHandler(async (req, res) => {
     }
 });
 
+
+const updateProfilePic = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (user) {
+    // req.file.path mein Cloudinary ka URL hota hai
+    user.profilePic = req.file.path; 
+    const updatedUser = await user.save();
+    res.json({ success: true, user: updatedUser });
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+});
+
 // ✅ Sare functions ko export list mein check karein
 export {
     authUser,
@@ -239,6 +253,7 @@ export {
     addUserAddress,
     deleteAddress,
     updateAddress,
+    updateProfilePic
     
 
     

@@ -15,6 +15,7 @@ import {
     updateAddress
 } from "../controllers/userController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
+import { upload } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -40,5 +41,8 @@ router.route("/:id")
     .put(protect, admin, updateUser)
     .delete(protect, admin, deleteUser);
 router.route("/address/:id").delete(protect, deleteAddress).put(protect, updateAddress)
+
+router.put('/profile/pic', protect, upload.single('image'), updateProfilePic);
+
 
 export default router;
