@@ -68,6 +68,30 @@ const Profile = () => {
         }
     };
 
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("image", file); // Ye 'image' wahi hai jo upload.single('image') mein hai
+
+        try {
+            setLoading(true);
+            const { data } = await api.put("/users/profile/pic", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            if (data.success) {
+                dispatch(setCredentials(data.user)); // Redux update
+                toast.success("Profile picture updated!");
+            }
+        } catch (error) {
+            toast.error("Failed to upload image");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // 🗑️ Delete Address
     const handleDeleteAddress = async (id) => {
         if (window.confirm("Are you sure you want to delete this address?")) {
@@ -143,6 +167,9 @@ const Profile = () => {
         }
     }
 
+
+
+
     // Sync tabs
     useEffect(() => {
         const urlTab = searchParams.get("tab")
@@ -205,15 +232,58 @@ const Profile = () => {
                     {/* Sidebar */}
                     <div className="lg:col-span-1 space-y-4">
                         <div className="bg-white p-6 rounded shadow-sm border border-gray-100">
-                            <div className="flex flex-col items-center mb-8 pb-6 border-b border-gray-50">
+                            {/* <div className="flex flex-col items-center mb-8 pb-6 border-b border-gray-50">
                                 {user?.profilePic ? (
-                                    <img src={user.profilePic} className="w-20 h-20 rounded-full object-cover border-2 border-pink-100 mb-3" alt="Profile" />
+                                    <img src={user.profilePic} 
+                                    className="w-20 h-20 rounded-full object-cover border-2 border-pink-100 mb-3" 
+                                    alt="Profile" />
                                 ) : (
                                     <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-3">
                                         <User size={40} className="text-gray-400" />
                                     </div>
                                 )}
                                 <h3 className="font-bold text-gray-800 uppercase tracking-tight">{user?.name}</h3>
+                                <p className="text-xs text-gray-500">{user?.email}</p>
+                            </div> */}
+
+                            {/* Sidebar Profile Image Section */}
+                            <div className="flex flex-col items-center mb-8 pb-6 border-b border-gray-50">
+                                <div className="relative group">
+                                    {/* Profile Picture Display */}
+                                    {user?.profilePic ? (
+                                        <img
+                                            src={user.profilePic}
+                                            className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
+                                            alt="Profile"
+                                        />
+                                    ) : (
+                                        <div className="w-24 h-24 bg-pink-100 text-pink-500 rounded-full flex items-center justify-center text-3xl font-bold border-4 border-white shadow-md uppercase">
+                                            {user?.name?.charAt(0)}
+                                        </div>
+                                    )}
+
+                                    {/* ✅ Camera Icon Overlay (Clickable) */}
+                                    <label className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg border border-gray-100 cursor-pointer hover:bg-gray-50 transition-all">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+
+                                        {/* Hidden Input jo handleImageUpload ko call karega */}
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                        />
+                                    </label>
+
+                                    {/* Loading Spinner overlay (Optional) */}
+                                    {loading && (
+                                        <div className="absolute inset-0 bg-white/50 rounded-full flex items-center justify-center">
+                                            <div className="w-5 h-5 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <h3 className="font-bold text-gray-800 mt-4 uppercase tracking-tight">{user?.name}</h3>
                                 <p className="text-xs text-gray-500">{user?.email}</p>
                             </div>
                             <nav className="space-y-1">
