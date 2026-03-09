@@ -12,7 +12,8 @@ import {
     logout,
     addUserAddress,
     deleteAddress,
-    updateAddress
+    updateAddress,
+    updateProfilePic
 } from "../controllers/userController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 import { upload } from '../middleware/uploadMiddleware.js';
