@@ -42,7 +42,7 @@ export const removeFromWishlist = createAsyncThunk(
 );
 
 const initialState = {
-  wishlist: [],
+  items: [], // ✅ 'wishlist' ko 'items' kar diya taaki component se match kare
   loading: false,
   error: null,
 };
@@ -52,32 +52,30 @@ const wishlistSlice = createSlice({
   initialState,
   reducers: {
     clearWishlistLocally: (state) => {
-      state.wishlist = [];
+      state.items = [];
     }
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Wishlist
       .addCase(fetchWishlist.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchWishlist.fulfilled, (state, action) => {
         state.loading = false;
-        state.wishlist = action.payload;
+        // ✅ Yahan check karein: Agar backend { wishlist: [...] } bhej raha hai toh action.payload.products ya action.payload use karein
+        state.items = action.payload?.products || action.payload || [];
       })
       .addCase(fetchWishlist.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      // Toggle / Remove
       .addCase(toggleWishlist.fulfilled, (state, action) => {
-        state.wishlist = action.payload;
+        state.items = action.payload?.products || action.payload || [];
       })
       .addCase(removeFromWishlist.fulfilled, (state, action) => {
-        state.wishlist = action.payload;
+        state.items = action.payload?.products || action.payload || [];
       });
   },
 });
-
 export const { clearWishlistLocally } = wishlistSlice.actions;
 export default wishlistSlice.reducer;
