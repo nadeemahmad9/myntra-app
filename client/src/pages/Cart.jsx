@@ -158,7 +158,7 @@ import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-center"
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react"
 import { fetchCart, updateCartItem, removeFromCart } from "../redux/slices/cartSlice"
 import toast from "react-hot-toast"
 
