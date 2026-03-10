@@ -31,6 +31,10 @@ const Wishlist = () => {
                 size: defaultSize
             })).unwrap()
 
+            // 2. Cart mein success hone ke baad, Wishlist se remove karein
+            // Yahan 'removeFromWishlist' wahi action hai jo aapne slice mein banaya hai
+            await dispatch(removeFromWishlist(product._id)).unwrap();
+
             toast.success("Added to Bag!")
         } catch (error) {
             toast.error(error || "Error adding to cart")
