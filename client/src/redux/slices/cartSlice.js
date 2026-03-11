@@ -183,8 +183,17 @@ const cartSlice = createSlice({
     reducers: {
         clearCartLocally: (state) => {
             state.cartItems = [];
+        },
+        updateQtyLocally:(state,action)=>{
+          const {id, qty} = action.payload;
+          const item = state.cartItems.find(i => i._id ===id);
+          if(item){
+            item.qty = qty;
+          }
         }
     },
+
+    
     extraReducers: (builder) => {
         builder
             // --- Fetch Cart ---
@@ -225,5 +234,5 @@ const cartSlice = createSlice({
     },
 });
 
-export const { clearCartLocally } = cartSlice.actions;
+export const { clearCartLocally, updateQtyLocally } = cartSlice.actions;
 export default cartSlice.reducer;

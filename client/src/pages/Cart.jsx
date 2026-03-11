@@ -341,7 +341,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { Link, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react"
-import { fetchCart, updateCartItem, removeFromCart } from "../redux/slices/cartSlice"
+import { fetchCart, updateCartItem, removeFromCart, updateQtyLocally } from "../redux/slices/cartSlice"
 import toast from "react-hot-toast"
 
 const Cart = () => {
@@ -367,10 +367,14 @@ const Cart = () => {
         if (newQty > stock) return toast.error(`Only ${stock} units available`);
         if (newQty < 1) return;
 
+        // ✅ STEP 1: UI ko bina delay ke turant update karein (Redux Local)
+        dispatch(updateQtyLocally({ id, qty: newQty }));
+
         dispatch(updateCartItem({ id, qty: newQty }))
             .unwrap()
             .catch((err) => {
                 // ✅ Check: Agar 'err' object hai toh string render karein
+                dispatch(updateQtyLocally({ id, qty: item.qty }));
                 toast.error(typeof err === 'string' ? err : "Update failed");
             });
     };
