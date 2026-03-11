@@ -74,17 +74,20 @@ const cartSlice = createSlice({
         state.cartItems = action.payload;
       })
       // Update Item
-    // Extra Reducers mein matching logic:
+// Update Item
 .addCase(updateCartItem.fulfilled, (state, action) => {
-    const index = state.cartItems.findIndex(item => item._id === action.payload._id);
-    if (index !== -1) {
-        state.cartItems[index].qty = action.payload.qty;
-    }
+    state.loading = false;
+    // ✅ Backend poora array bhej raha hai { cartItems: [...] }
+    // Agar controller 'cartItems' key bhej raha hai toh action.payload.cartItems use karein
+    state.cartItems = action.payload.cartItems || action.payload; 
 })
-      // Remove Item
-      .addCase(removeFromCart.fulfilled, (state, action) => {
-        state.cartItems = state.cartItems.filter(item => item._id !== action.payload);
-      })
+
+// Remove Item
+.addCase(removeFromCart.fulfilled, (state, action) => {
+    state.loading = false;
+    // ✅ Backend yahan bhi poora updated array bhej raha hai
+    state.cartItems = action.payload.cartItems || action.payload;
+})
 
       .addCase(addToCart.fulfilled, (state, action) => {
     state.loading = false;
