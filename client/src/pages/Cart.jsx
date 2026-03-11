@@ -252,7 +252,6 @@ const Cart = () => {
                                     <div className="flex items-center gap-6 mt-4">
                                         {/* ✅ Quantity Selector UI */}
                                         <div className="flex items-center border border-gray-300 rounded overflow-hidden">
-                                            // ... Loop ke andar Plus/Minus buttons:
                                             <button
                                                 onClick={() => handleQtyChange(item, -1)} // ✅ Poora item bhejein
                                                 className="p-1.5 px-2 hover:bg-gray-100 border-r"
