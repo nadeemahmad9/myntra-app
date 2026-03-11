@@ -75,18 +75,29 @@ const cartSlice = createSlice({
       })
       // Update Item
 // Update Item
+// updateCartItem.fulfilled ke andar ye badlav karein
 .addCase(updateCartItem.fulfilled, (state, action) => {
     state.loading = false;
-    // ✅ Backend poora array bhej raha hai { cartItems: [...] }
-    // Agar controller 'cartItems' key bhej raha hai toh action.payload.cartItems use karein
-    state.cartItems = action.payload.cartItems || action.payload; 
+    state.error = null;
+    
+    // ✅ Backend se 'action.payload.cartItems' aa raha hai
+    // Agar hum sirf action.payload likhte hain toh wo object hota hai, array nahi
+    if (action.payload && action.payload.cartItems) {
+        state.cartItems = action.payload.cartItems;
+    } else {
+        // Fallback agar payload direct array ho
+        state.cartItems = action.payload;
+    }
 })
 
-// Remove Item
+// ✅ Same cheez removeFromCart ke liye bhi karein
 .addCase(removeFromCart.fulfilled, (state, action) => {
     state.loading = false;
-    // ✅ Backend yahan bhi poora updated array bhej raha hai
-    state.cartItems = action.payload.cartItems || action.payload;
+    if (action.payload && action.payload.cartItems) {
+        state.cartItems = action.payload.cartItems;
+    } else {
+        state.cartItems = action.payload;
+    }
 })
 
       .addCase(addToCart.fulfilled, (state, action) => {
