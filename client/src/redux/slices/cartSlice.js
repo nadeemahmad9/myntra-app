@@ -11,26 +11,24 @@ export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWi
   }
 });
 
-// 2. Update Cart Item Quantity (Missing Export Fixed)
 export const updateCartItem = createAsyncThunk(
   'cart/updateItem',
-  async ({ id, qty }, { rejectWithValue }) => {
+  async ({ id, qty }, { rejectWithValue }) => { // 👈 'productId' ki jagah sirf 'id'
     try {
       const { data } = await api.put(`/cart/${id}`, { qty });
-      return data.item; // Backend se updated item aayega
+      return data.item; 
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Update failed");
     }
   }
 );
-
-// 3. Remove Item from Cart (Missing Export Fixed)
+// ✅ 3. Remove Item
 export const removeFromCart = createAsyncThunk(
   'cart/removeItem',
-  async (id, { rejectWithValue }) => {
+  async (productId, { rejectWithValue }) => { // 👈 Change: 'id' ki jagah 'productId'
     try {
-      await api.delete(`/cart/${id}`);
-      return id; // Hamen sirf ID chahiye state se remove karne ke liye
+      await api.delete(`/cart/${productId}`);
+      return productId; 
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Delete failed");
     }
@@ -76,12 +74,13 @@ const cartSlice = createSlice({
         state.cartItems = action.payload;
       })
       // Update Item
-      .addCase(updateCartItem.fulfilled, (state, action) => {
-        const index = state.cartItems.findIndex(item => item._id === action.payload._id);
-        if (index !== -1) {
-          state.cartItems[index].qty = action.payload.qty;
-        }
-      })
+    // Extra Reducers mein matching logic:
+.addCase(updateCartItem.fulfilled, (state, action) => {
+    const index = state.cartItems.findIndex(item => item._id === action.payload._id);
+    if (index !== -1) {
+        state.cartItems[index].qty = action.payload.qty;
+    }
+})
       // Remove Item
       .addCase(removeFromCart.fulfilled, (state, action) => {
         state.cartItems = state.cartItems.filter(item => item._id !== action.payload);

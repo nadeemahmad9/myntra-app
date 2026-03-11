@@ -176,35 +176,22 @@ const Cart = () => {
         }
     }, [dispatch, user])
 
-    // ✅ Updated Quantity Handler: Ab ye Redux se real-time update karega
-    const handleQtyChange = (itemId, currentQty, delta, stock = 10) => {
-        const newQty = currentQty + delta
+    // Cart.jsx ke andar handleQtyChange function:
+    const handleQtyChange = (item, delta) => {
+        const id = item._id; // ✅ Hamesha item._id hi use karein update ke liye
+        if (!id) return toast.error("Item ID not found");
 
-        // Check if exceeds stock
-        if (newQty > stock) {
-            toast.error(`Only ${stock} units available in stock`)
-            return
-        }
+        const newQty = item.qty + delta;
+        const stock = item.countInStock || 10;
 
-        // Prevent quantity less than 1
-        if (newQty < 1) {
-            toast.error("Minimum quantity is 1. Use delete to remove item.")
-            return
-        }
+        if (newQty > stock) return toast.error(`Only ${stock} units available`);
+        if (newQty < 1) return;
 
-        // ✅ Dispatching update action to Backend & Redux
-        dispatch(updateCartItem({
-            productId: itemId,
-            qty: newQty
-        }))
+        // ✅ Dispatch with 'id' key
+        dispatch(updateCartItem({ id, qty: newQty }))
             .unwrap()
-            .then(() => {
-                // Success par toast ki zaroorat nahi warna user annoy ho jayega
-            })
-            .catch((err) => {
-                toast.error(err || "Failed to update quantity")
-            })
-    }
+            .catch((err) => toast.error(err));
+    };
 
     // Totals Calculation
     const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.qty), 0)
@@ -265,18 +252,29 @@ const Cart = () => {
                                     <div className="flex items-center gap-6 mt-4">
                                         {/* ✅ Quantity Selector UI */}
                                         <div className="flex items-center border border-gray-300 rounded overflow-hidden">
+                                            // ... Loop ke andar Plus/Minus buttons:
                                             <button
-                                                onClick={() => handleQtyChange(item.productId || item._id, item.qty, -1, item.countInStock)}
-                                                className="p-1.5 px-2 hover:bg-gray-100 transition-colors border-r"
+                                                onClick={() => handleQtyChange(item, -1)} // ✅ Poora item bhejein
+                                                className="p-1.5 px-2 hover:bg-gray-100 border-r"
                                             >
-                                                <Minus size={12} className="text-gray-600" />
+                                                <Minus size={12} />
                                             </button>
-                                            <span className="px-4 text-xs font-black text-gray-800">{item.qty}</span>
+
+                                            <span className="px-4 text-xs font-black">{item.qty}</span>
+
                                             <button
-                                                onClick={() => handleQtyChange(item.productId || item._id, item.qty, 1, item.countInStock || 10)}
-                                                className="p-1.5 px-2 hover:bg-gray-100 transition-colors border-l"
+                                                onClick={() => handleQtyChange(item, 1)} // ✅ Poora item bhejein
+                                                className="p-1.5 px-2 hover:bg-gray-100 border-l"
                                             >
-                                                <Plus size={12} className="text-gray-600" />
+                                                <Plus size={12} />
+                                            </button>
+
+                                            {/* Remove button fix */}
+                                            <button
+                                                onClick={() => dispatch(removeFromCart(item._id))} // ✅ item._id use karein
+                                                className="absolute top-4 right-4 text-gray-300 hover:text-red-500"
+                                            >
+                                                <Trash2 size={18} />
                                             </button>
                                         </div>
                                         <div className="font-black text-sm text-gray-900">₹{item.price * item.qty}</div>
