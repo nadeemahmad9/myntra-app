@@ -6,7 +6,7 @@ const User = require("../models/userModel")
 
 // GET /api/admin/stats
 // Private/Admin
-const getAdminStats = asyncHandler(async (req, res) => {
+export const getAdminStats = asyncHandler(async (req, res) => {
   // Totals
   const [totalUsers, totalProducts, ordersAgg] = await Promise.all([
     User.countDocuments({}),
@@ -78,4 +78,3 @@ const getAdminStats = asyncHandler(async (req, res) => {
   })
 })
 
-export default getAdminStats;
