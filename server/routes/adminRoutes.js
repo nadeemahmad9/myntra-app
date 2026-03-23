@@ -6,4 +6,4 @@ const { protect, admin } = require("../middleware/authMiddleware.js");
 
 router.get("/stats", protect, admin, getAdminStats); 
 
-module.exports = router; 
+export default router; 
