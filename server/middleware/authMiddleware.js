@@ -6,7 +6,7 @@ import User from "../models/userModel.js";
 /**
  * @desc    Protect routes - Verify JWT in Cookie or Header
  */
-const protect = asyncHandler(async (req, res, next) => {
+export const protect = asyncHandler(async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     try {
@@ -36,7 +36,7 @@ const protect = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Admin access middleware
  */
-const admin = (req, res, next) => {
+export const admin = (req, res, next) => {
     if (req.user && req.user.isAdmin) {
         next();
     } else {
@@ -44,4 +44,3 @@ const admin = (req, res, next) => {
     }
 };
 
-export { protect, admin };
