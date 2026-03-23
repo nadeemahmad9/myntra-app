@@ -95,7 +95,8 @@ import orderRoutes from "./routes/orderRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import googleAuthRoutes from "./routes/googleAuth.js";
-// import adminRoutes from "./routes/admin.js"; // Ensure path is correct
+const adminRoutes = require("./routes/adminRoutes") 
+
 
 // Load env vars early
 dotenv.config();
@@ -159,7 +160,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
-// app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminRoutes) 
+
 
 // Healthy check route
 app.get("/health", (req, res) => res.status(200).json({ status: "OK" }));
