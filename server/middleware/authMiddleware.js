@@ -9,8 +9,7 @@ import User from "../models/userModel.js";
 const protect = asyncHandler(async (req, res, next) => {
     let token;
 
-    // 2+ Year Exp Touch: Dono jagah check karna (Cookie aur Auth Header)
-    // Professional apps mein cookies zyada use hoti hain security ke liye
+  
     if (req.cookies && req.cookies.token) {
         token = req.cookies.token;
     } 
@@ -29,6 +28,7 @@ const protect = asyncHandler(async (req, res, next) => {
         // User fetch karna aur request object mein attach karna
         // model mein select: false hai toh yahan password apne aap nahi aayega
         req.user = await User.findById(decoded.id);
+        console.log("User Found in DB:", req.user);
 
         if (!req.user) {
             throw new ApiError(404, "No user found with this id");
