@@ -8,5 +8,5 @@ import { protect, admin } from "../middleware/authMiddleware.js";
 
 // Route definition
 router.get("/stats",protect,admin, getAdminStats); 
-router.post("/products", createProduct); 
+router.post("/products",protect, admin, createProduct); 
 export default router;
