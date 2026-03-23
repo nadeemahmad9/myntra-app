@@ -78,4 +78,4 @@ const getAdminStats = asyncHandler(async (req, res) => {
   })
 })
 
-module.exports = { getAdminStats }
+export default getAdminStats;
