@@ -7,38 +7,31 @@ import User from "../models/userModel.js";
  * @desc    Protect routes - Verify JWT in Cookie or Header
  */
 const protect = asyncHandler(async (req, res, next) => {
-    let token;
-
-  
-    if (req.cookies && req.cookies.token) {
-        token = req.cookies.token;
-    } 
-    else if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-        token = req.headers.authorization.split(" ")[1];
-    }
-
-    if (!token) {
-        throw new ApiError(401, "Not authorized to access this route");
-    }
-
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     try {
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      token = req.headers.authorization.split(" ")[1];
+      console.log("Token Received:", token); // 👈 Log 1
 
-        // User fetch karna aur request object mein attach karna
-        // model mein select: false hai toh yahan password apne aap nahi aayega
-        req.user = await User.findById(decoded.id);
-        console.log("User Found in DB:", req.user);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("Decoded Token Data:", decoded); // 👈 Log 2 (Check karein ki 'id' hai ya '_id')
 
-        if (!req.user) {
-            throw new ApiError(404, "No user found with this id");
-        }
+      // Yahan check karein ki 'id' field sahi hai ya nahi
+      req.user = await User.findById(decoded.id || decoded._id).select("-password");
+      console.log("User Found in DB:", req.user); // 👈 Log 3
 
-        next();
+      if (!req.user) {
+        res.status(401);
+        throw new Error("User not found in Database");
+      }
+
+      next();
     } catch (error) {
-        throw new ApiError(401, "Not authorized, token failed");
+      console.error("JWT Error:", error.message); // 👈 Log 4
+      res.status(401);
+      throw new Error("Not authorized, token failed");
     }
-});
+  }
 
 /**
  * @desc    Admin access middleware
