@@ -22,4 +22,10 @@ const productSchema = new mongoose.Schema({
   description: String,
 }, { timestamps: true });
 
+productSchema.index({ category: 1, subcategory: 1, brand: 1 });
+
+productSchema.index({ price: 1 });
+
+productSchema.index({ name: 'text', brand: 'text' });
+
 module.exports = mongoose.model("Products", productSchema)
