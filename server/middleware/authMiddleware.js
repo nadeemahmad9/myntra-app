@@ -6,7 +6,7 @@ import User from "../models/userModel.js";
 /**
  * @desc    Protect routes - Verify JWT in Cookie or Header
  */
-export const protect = asyncHandler(async (req, res, next) => {
+const protect = asyncHandler(async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     try {
@@ -36,11 +36,12 @@ export const protect = asyncHandler(async (req, res, next) => {
 /**
  * @desc    Admin access middleware
  */
-export const admin = (req, res, next) => {
+const admin = (req, res, next) => {
     if (req.user && req.user.isAdmin) {
         next();
     } else {
         throw new ApiError(403, "Access denied. Admin only route.");
     }
 };
+  export {protect, admin}
 
