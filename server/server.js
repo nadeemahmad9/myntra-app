@@ -95,7 +95,7 @@ import orderRoutes from "./routes/orderRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import googleAuthRoutes from "./routes/googleAuth.js";
-const adminRoutes = require("./routes/adminRoutes") 
+import adminRoutes from "./routes/adminRoutes.js"
 
 
 // Load env vars early
