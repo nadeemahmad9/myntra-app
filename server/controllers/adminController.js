@@ -79,3 +79,22 @@ export const getAdminStats = asyncHandler(async (req, res) => {
     })),
   });
 });
+export const createProduct = asyncHandler(async (req, res) => {
+    const { name, price, description, images, brand, category, subcategory, countInStock, sizes } = req.body;
+
+    const product = new Product({
+        user: req.user._id, // Agar 'protect' middleware use kar rahe hain
+        name,
+        price,
+        description,
+        images,
+        brand,
+        category,
+        subcategory,
+        countInStock,
+        sizes
+    });
+
+    const createdProduct = await product.save();
+    res.status(201).json(createdProduct);
+});
