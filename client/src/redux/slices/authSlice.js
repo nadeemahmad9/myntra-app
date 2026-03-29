@@ -9,17 +9,21 @@ export const loginUser = createAsyncThunk(
       const config = { headers: { 'Content-Type': 'application/json' } };
       const { data } = await axios.post('https://myntra-backend-he3a.onrender.com/api/users/login', userData, config);
 
+      const userInfo = {
+        ...data.user,
+        token: data.token
+      };
       localStorage.setItem('token', data.token);
       localStorage.setItem('userInfo', JSON.stringify(data.user));
 
-      return data.user;
+      return userInfo;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
 
-// ✅ 2. Register AsyncThunk (Naya Add Kiya Gaya)
+// ✅ 2. Register AsyncThunk 
 export const registerUser = createAsyncThunk(
   'auth/registerUser',
   async (userData, { rejectWithValue }) => {
@@ -28,10 +32,14 @@ export const registerUser = createAsyncThunk(
       // Backend route: /api/users (aapke controller ke mutabik)
       const { data } = await axios.post('https://myntra-backend-he3a.onrender.com/api/users', userData, config);
 
+      const userInfo = {
+        ...data.user,
+        token: data.token
+      };
       localStorage.setItem('token', data.token);
       localStorage.setItem('userInfo', JSON.stringify(data.user));
 
-      return data.user;
+      return userInfo;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
