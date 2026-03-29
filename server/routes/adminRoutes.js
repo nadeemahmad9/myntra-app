@@ -4,7 +4,7 @@ const router = express.Router();
 
 // Note: Controllers aur Middleware ke aage .js extension zaroori hai
 import { getAdminStats, createProduct } from "../controllers/adminController.js";
-// import { protect } from "../middleware/authMiddleware.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 // Route definition
 router.get("/stats", getAdminStats); 
