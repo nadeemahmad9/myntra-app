@@ -1,6 +1,6 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../utils/api';
+import api from '../../../../admin/src/utils/api.js';
 
 // Admin Action: Fetch Dashboard Stats
 export const fetchAdminStats = createAsyncThunk(
