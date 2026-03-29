@@ -93,6 +93,6 @@ orderSchema.virtual('isCancellable').get(function() {
     return this.orderStatus === "Processing" && !this.isPaid;
 });
 
-const Order = mongoose.model("Order", orderSchema);
+const Orders = mongoose.model("Order", orderSchema);
 
-export default Order;
+export default Orders;
