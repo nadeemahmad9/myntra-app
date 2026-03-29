@@ -98,7 +98,6 @@ const authSlice = createSlice({
     state.loading = false;
     state.isAuthenticated = true;
     state.user = action.payload;
-    // Yeh line ensure karegi ki refresh par data na jaye
     localStorage.setItem('userInfo', JSON.stringify(action.payload)); 
 })
       .addCase(loginUser.rejected, (state, action) => {
