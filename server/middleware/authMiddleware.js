@@ -4,44 +4,51 @@ import { ApiError } from "../utils/ApiError.js";
 import User from "../models/userModel.js";
 
 /**
- * @desc    Protect routes - Verify JWT in Cookie or Header
+ * @desc Protect routes - Verify JWT in Header
  */
 const protect = asyncHandler(async (req, res, next) => {
-  let token;
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-    try {
-      token = req.headers.authorization.split(" ")[1];
-      console.log("Token Received:", token); // 👈 Log 1
+    let token;
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("Decoded Token Data:", decoded); // 👈 Log 2 (Check karein ki 'id' hai ya '_id')
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+        try {
+            token = req.headers.authorization.split(" ")[1];
+            // console.log("Token Received:", token); 
 
-      // Yahan check karein ki 'id' field sahi hai ya nahi
-      req.user = await User.findById(decoded.id || decoded._id).select("-password");
-      console.log("User Found in DB:", req.user); // 👈 Log 3
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            // console.log("Decoded Token Data:", decoded);
 
-      if (!req.user) {
-        res.status(401);
-        throw new Error("User not found in Database");
-      }
+            // 'id' ya '_id' dono check karein safely
+            const userId = decoded.id || decoded._id || decoded.sub;
+            
+            req.user = await User.findById(userId).select("-password");
+            // console.log("User Found in DB:", req.user);
 
-      next();
-    } catch (error) {
-      console.error("JWT Error:", error.message); // 👈 Log 4
-      res.status(401);
-      throw new Error("Not authorized, token failed");
+            if (!req.user) {
+                return next(new ApiError(401, "User not found in Database"));
+            }
+
+            return next(); // 👈 Agle middleware par bhejein
+        } catch (error) {
+            console.error("JWT Error:", error.message);
+            return next(new ApiError(401, "Not authorized, token failed"));
+        }
     }
-  }
+
+    if (!token) {
+        return next(new ApiError(401, "Not authorized, no token"));
+    }
+}); // 👈 Yeh bracket missing tha pehle
 
 /**
- * @desc    Admin access middleware
+ * @desc Admin access middleware
  */
 const admin = (req, res, next) => {
     if (req.user && req.user.isAdmin) {
         next();
     } else {
-        throw new ApiError(403, "Access denied. Admin only route.");
+        // Dashboard stats 0 hone ka asli karan yehi line hai agar isAdmin false ho
+        next(new ApiError(403, "Access denied. Admin only route."));
     }
 };
-  export {protect, admin}
 
+export { protect, admin };
