@@ -7,6 +7,12 @@ import User from "../models/userModel.js";
 // @route   GET /api/admin/stats
 // @access  Private/Admin
 export const getAdminStats = asyncHandler(async (req, res) => {
+
+    const count = await Order.countDocuments();
+    console.log("Database mein total kitne orders mile?:", count);
+
+    const rawData = await mongoose.connection.db.collection('orders').find({}).toArray();
+    console.log("Raw Direct DB fetch count:", rawData.length);
     // 1. Dropdown se aane wali value (Default 7 days)
     const rangeInDays = Number(req.query.days) || 7;
 
