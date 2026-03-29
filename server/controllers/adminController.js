@@ -1,4 +1,5 @@
 import asyncHandler from "express-async-handler";
+import mongoose from "mongoose"; // 👈 Ye missing tha, isliye crash ho raha tha
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import User from "../models/userModel.js";
@@ -7,16 +8,13 @@ import User from "../models/userModel.js";
 // @route   GET /api/admin/stats
 // @access  Private/Admin
 export const getAdminStats = asyncHandler(async (req, res) => {
-
+    // 1. Database Connection Check (Debug Logs)
     const count = await Order.countDocuments();
-    console.log("Database mein total kitne orders mile?:", count);
+    console.log("Total Orders Found:", count);
 
-    const rawData = await mongoose.connection.db.collection('orders').find({}).toArray();
-    console.log("Raw Direct DB fetch count:", rawData.length);
-    // 1. Dropdown se aane wali value (Default 7 days)
     const rangeInDays = Number(req.query.days) || 7;
 
-    // Totals Calculation (Promise.all use kiya hai performance ke liye)
+    // 2. Totals Calculation - Promise.all for speed
     const [totalUsers, totalProducts, ordersAgg] = await Promise.all([
         User.countDocuments({}),
         Product.countDocuments({}),
@@ -25,8 +23,8 @@ export const getAdminStats = asyncHandler(async (req, res) => {
                 $group: {
                     _id: null,
                     totalOrders: { $sum: 1 },
-                    // totalRevenue calculate karte waqt ensure karein totalPrice number ho
-                    totalRevenue: { $sum: { $toDouble: "$totalPrice" } },
+                    // $toDouble ensure karta hai ki string price bhi number ban jaye
+                    totalRevenue: { $sum: { $convert: { input: "$totalPrice", to: "double", onError: 0 } } },
                 },
             },
         ]),
@@ -34,25 +32,25 @@ export const getAdminStats = asyncHandler(async (req, res) => {
 
     const totalsData = ordersAgg[0] || { totalOrders: 0, totalRevenue: 0 };
 
-    // 2. Dynamic Date Range Setup
+    // 3. Dynamic Date Range Setup
     const fromDate = new Date();
     fromDate.setDate(fromDate.getDate() - (rangeInDays - 1));
     fromDate.setHours(0, 0, 0, 0);
 
-    // Sales Aggregation for Graph (Date-wise)
+    // 4. Sales Aggregation for Graph
     const salesByDayAgg = await Order.aggregate([
         { $match: { createdAt: { $gte: fromDate } } },
         {
             $group: {
                 _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
                 orders: { $sum: 1 },
-                revenue: { $sum: { $toDouble: "$totalPrice" } },
+                revenue: { $sum: { $convert: { input: "$totalPrice", to: "double", onError: 0 } } },
             },
         },
         { $sort: { _id: 1 } },
     ]);
 
-    // 3. Normalize Array: Har din ka data fill karein (chahe wo 0 hi kyun na ho)
+    // 5. Normalize Array: Khali dino ko 0 se bharna
     const salesByDay = Array.from({ length: rangeInDays }).map((_, i) => {
         const d = new Date(fromDate);
         d.setDate(fromDate.getDate() + i);
@@ -67,13 +65,14 @@ export const getAdminStats = asyncHandler(async (req, res) => {
         };
     });
 
-    // Top categories logic fix (Handling Object vs String)
+    // 6. Top categories logic
     const topCategoriesAgg = await Product.aggregate([
         { $group: { _id: "$category", count: { $sum: 1 } } },
         { $sort: { count: -1 } },
         { $limit: 8 },
     ]);
 
+    // 7. Final Response
     res.json({
         totals: {
             totalUsers,
@@ -83,19 +82,16 @@ export const getAdminStats = asyncHandler(async (req, res) => {
         },
         salesByDay,
         topCategories: topCategoriesAgg.map((x) => ({
-            category: typeof x._id === "object" ? (x._id?.name || "Unknown") : String(x._id),
+            category: typeof x._id === "object" ? (x._id?.name || "Uncategorized") : String(x._id || "Uncategorized"),
             count: x.count,
         })),
     });
 });
 
 // @desc    Create a new product
-// @route   POST /api/admin/products
-// @access  Private/Admin
 export const createProduct = asyncHandler(async (req, res) => {
     const { name, price, description, images, brand, category, subcategory, countInStock, sizes } = req.body;
 
-    // Validation: Check karein ki zaroori fields missing na hon
     if (!name || !price || !images) {
         res.status(400);
         throw new Error("Please provide all required fields (Name, Price, Images)");
