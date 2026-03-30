@@ -30,6 +30,8 @@ router.route("/:id")
 router.route("/:id/pay")
     .put(updateOrderToPaid);          // Update order status to paid
 
+router.route("/:id/status").put(protect, admin, updateOrderStatus);
+
 router.route("/:id/deliver")
     .put(admin, updateOrderToDelivered); // Admin: Update order status to delivered
 
