@@ -357,27 +357,33 @@ const Cart = () => {
         }
     }, [dispatch, user])
 
-    const handleQtyChange = (item, delta) => {
-        const id = item._id;
-        if (!id) return toast.error("Item ID not found");
+   const handleQtyChange = (item, delta) => {
+    const id = item._id;
+    if (!id) return toast.error("Item ID not found");
 
-        const newQty = item.qty + delta;
-        const stock = item.countInStock || 10;
+    const newQty = item.qty + delta;
+    const stock = item.countInStock || 10;
 
-        if (newQty > stock) return toast.error(`Only ${stock} units available`);
-        if (newQty < 1) return;
+    // 🚩 AGAR QUANTITY 0 HO JAYE, TOH REMOVE KAREIN
+    if (newQty < 1) {
+        // Confirmation ke liye toast (Optional)
+        toast.success(`${item.name} removed from bag`);
+        dispatch(removeFromCart(id));
+        return;
+    }
 
-        // ✅ STEP 1: UI ko bina delay ke turant update karein (Redux Local)
-        dispatch(updateQtyLocally({ id, qty: newQty }));
+    if (newQty > stock) return toast.error(`Only ${stock} units available`);
 
-        dispatch(updateCartItem({ id, qty: newQty }))
-            .unwrap()
-            .catch((err) => {
-                // ✅ Check: Agar 'err' object hai toh string render karein
-                dispatch(updateQtyLocally({ id, qty: item.qty }));
-                toast.error(typeof err === 'string' ? err : "Update failed");
-            });
-    };
+    // STEP 1: UI ko bina delay ke turant update karein (Redux Local)
+    dispatch(updateQtyLocally({ id, qty: newQty }));
+
+    dispatch(updateCartItem({ id, qty: newQty }))
+        .unwrap()
+        .catch((err) => {
+            dispatch(updateQtyLocally({ id, qty: item.qty }));
+            toast.error(typeof err === 'string' ? err : "Update failed");
+        });
+};
 
     const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.qty), 0)
     const shipping = subtotal > 1000 || subtotal === 0 ? 0 : 99
