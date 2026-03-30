@@ -364,7 +364,6 @@ const Cart = () => {
     const newQty = item.qty + delta;
     const stock = item.countInStock || 10;
 
-    // 🚩 AGAR QUANTITY 0 HO JAYE, TOH REMOVE KAREIN
     if (newQty < 1) {
         // Confirmation ke liye toast (Optional)
         toast.success(`${item.name} removed from bag`);
