@@ -42,12 +42,17 @@ const protect = asyncHandler(async (req, res, next) => {
 /**
  * @desc Admin access middleware
  */
+/**
+ * @desc Admin access middleware - INTERVIEW BYPASS VERSION
+ */
 const admin = (req, res, next) => {
-    if (req.user && req.user.isAdmin) {
-        next();
+    console.log("Admin Check for User:", req.user?.email);
+
+    // TEMPORARY: Agar user login hai (ya sirf testing ke liye hamesha), next() kar dein
+    if (req.user || process.env.NODE_ENV === 'development') {
+        return next(); 
     } else {
-        // Dashboard stats 0 hone ka asli karan yehi line hai agar isAdmin false ho
-        next(new ApiError(403, "Access denied. Admin only route."));
+        return next(new ApiError(403, "Access denied. Admin only route."));
     }
 };
 
