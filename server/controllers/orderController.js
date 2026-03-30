@@ -1,173 +1,136 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import Order from "../models/orderModel.js";
-import Product from "../models/productModel.js";
+const asyncHandler = require("express-async-handler")
+const Order = require("../models/orderModel")
 
-/**
- * @desc    Create new order with price validation & stock check
- * @route   POST /api/orders
- * @access  Private
- */
+// @desc    Create new order
+// @route   POST /api/orders
+// @access  Private
 const addOrderItems = asyncHandler(async (req, res) => {
-    const { 
-        orderItems, 
-        shippingAddress, 
-        paymentMethod, 
-        itemsPrice, 
-        taxPrice, 
-        shippingPrice, 
-        totalPrice 
-    } = req.body;
+  const { orderItems, shippingAddress, paymentMethod, itemsPrice, taxPrice, shippingPrice, totalPrice } = req.body
+  console.log(req.body);
+  
 
-    if (!orderItems || orderItems.length === 0) {
-        throw new ApiError(400, "No order items found");
-    }
-
-    // 2+ Year Exp Touch: Backend Validation
-    // Frontend se aayi prices ko verify karna zaroori hai (Security)
-    let dbItemsPrice = 0;
-    
-    for (const item of orderItems) {
-        const product = await Product.findById(item.product);
-        if (!product) {
-            throw new ApiError(404, `Product ${item.name} not found`);
-        }
-        
-        // Stock Check
-        if (product.countInStock < item.qty) {
-            throw new ApiError(400, `${product.name} is out of stock or insufficient quantity`);
-        }
-
-        dbItemsPrice += product.price * item.qty;
-    }
-
-    // Tax aur Shipping recalculate karke verify karein (Example logic)
-    const calculatedTotal = dbItemsPrice + Number(taxPrice) + Number(shippingPrice);
-    
-    // Agar frontend ka total backend calculation se match nahi karta
-    if (Math.round(totalPrice) !== Math.round(calculatedTotal)) {
-        // throw new ApiError(400, "Price mismatch detected. Order cancelled.");
-    }
-
+  if (orderItems && orderItems.length === 0) {
+    res.status(400)
+    throw new Error("No order items")
+  } else {
     const order = new Order({
-        orderItems: orderItems.map((x) => ({
-            ...x,
-            product: x.product,
-            _id: undefined // Security: ID mismatch na ho
-        })),
-        user: req.user._id,
-        shippingAddress,
-        paymentMethod,
-        itemsPrice: dbItemsPrice,
-        taxPrice,
-        shippingPrice,
-        totalPrice: calculatedTotal,
-    });
+      orderItems,
+      user: req.user._id,
+      shippingAddress,
+      paymentMethod,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      totalPrice,
+    })
 
-    const createdOrder = await order.save();
+    const createdOrder = await order.save()
 
-    // 2+ Year Exp Touch: Order hone ke baad stock update karna
-    // Real industry mein hum yahan transactions (session) use karte hain
-    for (const item of orderItems) {
-        await Product.findByIdAndUpdate(item.product, {
-            $inc: { countInStock: -item.qty }
-        });
-    }
+    res.status(201).json(createdOrder)
+  }
+})
 
-    res.status(201).json({
-        success: true,
-        order: createdOrder
-    });
-});
-
-/**
- * @desc    Get order by ID with user details
- * @route   GET /api/orders/:id
- */
+// @desc    Get order by ID
+// @route   GET /api/orders/:id
+// @access  Private
 const getOrderById = asyncHandler(async (req, res) => {
-    const order = await Order.findById(req.params.id).populate(
-        "user",
-        "name email"
-    );
+  const order = await Order.findById(req.params.id).populate("user", "name email")
 
-    if (!order) {
-        throw new ApiError(404, "Order not found");
-    }
+  if (order) {
+    res.json(order)
+  } else {
+    res.status(404)
+    throw new Error("Order not found")
+  }
+})
 
-    // Security check: Sirf Admin ya wahi User order dekh sake jisne order kiya
-    if (order.user._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
-        throw new ApiError(403, "Not authorized to view this order");
-    }
-
-    res.status(200).json({ success: true, order });
-});
-
-/**
- * @desc    Update order status to paid
- * @route   PUT /api/orders/:id/pay
- */
+// @desc    Update order to paid
+// @route   PUT /api/orders/:id/pay
+// @access  Private
 const updateOrderToPaid = asyncHandler(async (req, res) => {
-    const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id)
 
-    if (!order) {
-        throw new ApiError(404, "Order not found");
-    }
-
-    order.isPaid = true;
-    order.paidAt = Date.now();
+  if (order) {
+    order.isPaid = true
+    order.paidAt = Date.now()
     order.paymentResult = {
-        id: req.body.id,
-        status: req.body.status,
-        update_time: req.body.update_time,
-        email_address: req.body.payer.email_address,
-    };
-
-    const updatedOrder = await order.save();
-    res.status(200).json({ success: true, order: updatedOrder });
-});
-
-/**
- * @desc    Update delivery status (Admin only)
- * @route   PUT /api/orders/:id/deliver
- */
-const updateOrderToDelivered = asyncHandler(async (req, res) => {
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-        throw new ApiError(404, "Order not found");
+      id: req.body.id,
+      status: req.body.status,
+      update_time: req.body.update_time,
+      email_address: req.body.payer.email_address,
     }
 
-    order.isDelivered = true;
-    order.deliveredAt = Date.now();
+    const updatedOrder = await order.save()
 
-    const updatedOrder = await order.save();
-    res.status(200).json({ success: true, order: updatedOrder });
-});
+    res.json(updatedOrder)
+  } else {
+    res.status(404)
+    throw new Error("Order not found")
+  }
+})
 
-/**
- * @desc    Get current user's orders
- */
-const getMyOrders = asyncHandler(async (req, res) => {
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
-    res.status(200).json({ success: true, orders });
-});
 
-/**
- * @desc    Get all orders (Admin only)
- */
-const getOrders = asyncHandler(async (req, res) => {
-    const orders = await Order.find({})
-        .populate("user", "id name")
-        .sort({ createdAt: -1 });
+const updateOrderStatus = asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+        order.orderStatus = req.body.status; // Dropdown se aayi value
         
-    res.status(200).json({ success: true, orders });
+        // Agar status 'Delivered' ho raha hai, toh isDelivered ko bhi true kar dein
+        if (req.body.status === 'Delivered') {
+            order.isDelivered = true;
+            order.deliveredAt = Date.now();
+        }
+
+        const updatedOrder = await order.save();
+        res.json(updatedOrder);
+    } else {
+        res.status(404);
+        throw new Error('Order not found');
+    }
 });
 
-export {
-    addOrderItems,
-    getOrderById,
-    updateOrderToPaid,
-    updateOrderToDelivered,
-    getMyOrders,
-    getOrders,
-};
+// @desc    Update order to delivered
+// @route   PUT /api/orders/:id/deliver
+// @access  Private/Admin
+const updateOrderToDelivered = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id)
+
+  if (order) {
+    order.isDelivered = true
+    order.deliveredAt = Date.now()
+
+    const updatedOrder = await order.save()
+
+    res.json(updatedOrder)
+  } else {
+    res.status(404)
+    throw new Error("Order not found")
+  }
+})
+
+// @desc    Get logged in user orders
+// @route   GET /api/orders/myorders
+// @access  Private
+const getMyOrders = asyncHandler(async (req, res) => {
+  const orders = await Order.find({ user: req.user._id })
+  res.json(orders)
+})
+
+// @desc    Get all orders
+// @route   GET /api/orders
+// @access  Private/Admin
+const getOrders = asyncHandler(async (req, res) => {
+  const orders = await Order.find({}).populate("user", "id name")
+  res.json(orders)
+})
+
+module.exports = {
+  addOrderItems,
+  getOrderById,
+  updateOrderToPaid,
+  updateOrderToDelivered,
+  getMyOrders,
+  getOrders,
+  updateOrderStatus
+}
