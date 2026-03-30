@@ -13,10 +13,8 @@ const router = express.Router();
 
 /**
  * @route   /api/orders
- * Experienced Dev Touch: protect middleware ko upar se lagana bajaye har line mein repeat karne ke
  */
 
-// Saare niche waale routes ko login (protect) zaroori hai
 router.use(protect);
 
 router.route("/")
