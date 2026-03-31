@@ -51,20 +51,25 @@ const SubcategoryListing = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                // ✅ Fix 1: Route ko update kiya query parameter use karne ke liye
-                // Taaki ye aapke productRoutes.js (router.route("/").get(getProducts)) se match kare
-                const url = `${import.meta.env.VITE_BACKEND_URL}/api/products?subcategory=${subcategory}`;
-
+                // 1. Agar aapka backend dynamic routing (/subcategory/:id) use karta hai toh ye URL rakhein:
+                const url = `${import.meta.env.VITE_BACKEND_URL}/api/products/subcategory/${subcategory}`;
+                
                 const res = await fetch(url);
                 const data = await res.json();
 
-                // ✅ Fix 2: Data structure check
-                // Aapka controller { success: true, products: [...] } bhejta hai
-                if (data.success && data.products) {
+                console.log("Backend Response:", data); // Check karne ke liye ki data kaise aa raha hai
+
+                // 2. Data Structure handling
+                // Agar data direct array hai: [{}, {}]
+                if (Array.isArray(data)) {
+                    setAllProducts(data);
+                    setFilteredProducts(data);
+                } 
+                // Agar data object ke andar products array hai: { success: true, products: [] }
+                else if (data.products && Array.isArray(data.products)) {
                     setAllProducts(data.products);
                     setFilteredProducts(data.products);
                 } else {
-                    // Agar data.products nahi milta toh empty array set karein
                     setAllProducts([]);
                     setFilteredProducts([]);
                 }
