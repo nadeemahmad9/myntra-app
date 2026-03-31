@@ -96,8 +96,8 @@ export const updateOrderToDelivered = asyncHandler(async (req, res) => {
 
 // @desc    Get logged in user orders
 export const getMyOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user: req.user._id });
-  .sort({createdAt: -1)} // recent order on top
+  const orders = await Order.find({ user: req.user._id })
+  .sort({createdAt: -1)}; // recent order on top
   res.json(orders);
 });
 
