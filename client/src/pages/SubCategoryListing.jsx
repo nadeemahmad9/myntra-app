@@ -49,41 +49,45 @@ const SubcategoryListing = () => {
 
 
     useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                // 1. Agar aapka backend dynamic routing (/subcategory/:id) use karta hai toh ye URL rakhein:
-                const url = `${import.meta.env.VITE_BACKEND_URL}/api/products/subcategory/${subcategory}`;
-                
-                const res = await fetch(url);
-                const data = await res.json();
+    const fetchProducts = async () => {
+        try {
+            // Debug 1: Check karein URL sahi ban raha hai ya nahi
+            const url = `${import.meta.env.VITE_BACKEND_URL}/api/products/subcategory/${subcategory}`;
+            console.log("Fetching from URL:", url);
 
-                console.log("Backend Response:", data); // Check karne ke liye ki data kaise aa raha hai
+            const res = await fetch(url);
+            const data = await res.json();
 
-                // 2. Data Structure handling
-                // Agar data direct array hai: [{}, {}]
-                if (Array.isArray(data)) {
-                    setAllProducts(data);
-                    setFilteredProducts(data);
-                } 
-                // Agar data object ke andar products array hai: { success: true, products: [] }
-                else if (data.products && Array.isArray(data.products)) {
-                    setAllProducts(data.products);
-                    setFilteredProducts(data.products);
-                } else {
-                    setAllProducts([]);
-                    setFilteredProducts([]);
-                }
-            } catch (error) {
-                console.error("Error fetching products:", error);
-                setAllProducts([]);
-                setFilteredProducts([]);
+            // Debug 2: Console mein dekhein backend exactly kya bhej raha hai
+            console.log("Full Data from Backend:", data);
+
+            // Logic: Handle different response types
+            let finalProducts = [];
+
+            if (Array.isArray(data)) {
+                finalProducts = data;
+            } else if (data.products && Array.isArray(data.products)) {
+                finalProducts = data.products;
+            } else if (data.data && Array.isArray(data.data)) {
+                finalProducts = data.data;
             }
-        };
 
-        if (subcategory) {
-            fetchProducts();
+            console.log("Extracted Products:", finalProducts);
+
+            setAllProducts(finalProducts);
+            setFilteredProducts(finalProducts);
+
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            setAllProducts([]);
+            setFilteredProducts([]);
         }
-    }, [subcategory]);
+    };
+
+    if (subcategory) {
+        fetchProducts();
+    }
+}, [subcategory]);
 
     useEffect(() => {
         applyFilters()
