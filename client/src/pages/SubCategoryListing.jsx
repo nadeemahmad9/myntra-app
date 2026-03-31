@@ -52,8 +52,7 @@ const SubcategoryListing = () => {
     const fetchProducts = async () => {
         try {
             // Debug 1: Check karein URL sahi ban raha hai ya nahi
-            const url = `${import.meta.env.VITE_BACKEND_URL}/api/products/subcategory/${subcategory}`;
-            console.log("Fetching from URL:", url);
+const url = `${import.meta.env.VITE_BACKEND_URL}/api/products?subcategory=${subcategory}`;            console.log("Fetching from URL:", url);
 
             const res = await fetch(url);
             const data = await res.json();
