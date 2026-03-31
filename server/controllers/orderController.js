@@ -103,6 +103,7 @@ export const getMyOrders = asyncHandler(async (req, res) => {
 
 // @desc    Get all orders (Admin Only)
 export const getOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({}).populate("user", "id name");
+  const orders = await Order.find({}).populate("user", "id name")
+  .sort({ createdAt: -1 }); 
   res.json(orders);
 });
