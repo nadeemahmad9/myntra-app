@@ -16,7 +16,11 @@ const MyOrders = () => {
             try {
                 const { data } = await api.get("/orders/mine")
                 // 2+ Year Exp Touch: Latest orders hamesha upar hone chahiye
-                setOrders(data.orders)
+                if (data && data.orders) {
+                    setOrders(data.orders)
+                } else if (Array.isArray(data)) {
+                    setOrders(data)
+                }
             } catch (error) {
                 toast.error("Failed to load your orders")
             } finally {
@@ -29,8 +33,8 @@ const MyOrders = () => {
 
     if (loading) return <div className="p-20 text-center">Fetching your orders...</div>
 
-    if (orders.length === 0) {
-        return (
+if (!orders || orders.length === 0) {        
+    return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
                 <ShoppingBag size={60} className="text-gray-300 mb-4" />
                 <h2 className="text-xl font-bold">You haven't placed any orders yet!</h2>
@@ -49,7 +53,7 @@ const MyOrders = () => {
                 </h1>
 
                 <div className="space-y-4">
-                    {orders.map((order, idx) => (
+                    {orders?.map((order, idx) => (
                         <motion.div
                             key={order._id}
                             initial={{ opacity: 0, x: -20 }}
@@ -79,7 +83,7 @@ const MyOrders = () => {
                                 <div className="p-6 flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className="flex -space-x-4">
-                                            {order.orderItems.slice(0, 3).map((item, i) => (
+                                            {order.orderItems?.slice(0, 3).map((item, i) => (
                                                 <img
                                                     key={i}
                                                     src={item.image}
@@ -95,13 +99,12 @@ const MyOrders = () => {
                                         </div>
                                         <div>
                                             <p className="font-bold text-sm text-gray-800">
-                                                {order.orderItems[0].name} {order.orderItems.length > 1 ? `& ${order.orderItems.length - 1} more items` : ''}
-                                            </p>
+{order.orderItems?.[0]?.name || "Product Name"} 
+                                                {order.orderItems?.length > 1 ? ` & ${order.orderItems.length - 1} more items` : ''}                                            </p>
                                             <div className="flex items-center gap-2 mt-2">
                                                 <span className={`w-2 h-2 rounded-full ${order.isDelivered ? 'bg-green-500' : 'bg-orange-400'}`}></span>
                                                 <span className="text-xs font-bold text-gray-600 uppercase tracking-tight">
-                                                    Status: {order.orderStatus}
-                                                </span>
+Status: {order.orderStatus || (order.isPaid ? "Processing" : "Pending Payment")}                                                </span>
                                             </div>
                                         </div>
                                     </div>
