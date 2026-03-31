@@ -360,16 +360,17 @@ const SubcategoryListing = () => {
                                     transition={{ delay: index * 0.1 }}
                                 >
                                     <Link to={`/product/${product._id}`}>
-                                        <div className="relative">
-                                            <img
-                                                src={product.image || "/placeholder.svg"}
-                                                alt={product.name}
-                                                className="w-full h-full object-contain "
-                                            />
-                                            <div className="absolute top-2 right-2 bg-white rounded-full px-2 py-1">
-                                                <span className="text-xs font-bold text-green-600">{product.discount}% OFF</span>
-                                            </div>
-                                        </div>
+                                       <div className="relative h-64 w-full bg-gray-100"> {/* Height add ki gayi hai */}
+    <img
+        src={product.image || product.images[0] || "/placeholder.svg"}
+        alt={product.name}
+        className="w-full h-full object-cover" // object-contain se cover kar dein Myntra feel ke liye
+        onError={(e) => { e.target.src = "/placeholder.svg" }} // Error handling
+    />
+    <div className="absolute top-2 right-2 bg-white/90 rounded-full px-2 py-1 shadow-sm">
+        <span className="text-[10px] font-bold text-green-600">{product.discount}% OFF</span>
+    </div>
+</div>
                                         <div className="p-2">
                                             <h3 className="font-medium text-sm mb-1">{product.brand}</h3>
                                             <p className="text-xs text-gray-600 mb-2 line-clamp-2">{product.name}</p>
