@@ -41,11 +41,12 @@ router.get(
         const token = user.generateToken();
 
         // Cookie options
-        const options = {
-            expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-        };
+       const options = {
+    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+    secure: true, 
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", 
+};
 
         // Redirect with Cookie (Secure Way)
         res.cookie("token", token, options)
