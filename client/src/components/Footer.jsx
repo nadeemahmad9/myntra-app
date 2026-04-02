@@ -410,7 +410,7 @@ const Footer = () => {
                             <p className="text-[12px] text-gray-600 leading-snug italic">
                                 "This is NOT a real store. It is a student portfolio project created for educational purposes. No actual payments or orders are processed."
                             </p>
-                            <p className="text-[10px] text-gray-400 mt-2 text-right">— Developed by Naushad Ahmad</p>
+                            <p className="text-[10px] text-gray-400 mt-2 text-right">— Developed by Nadeem Ahmad</p>
                         </div>
                     </div>
                 </div>
