@@ -283,8 +283,9 @@ const Footer = () => {
                         </a>
                     </p>
                     <div className="mt-4 md:mt-0">
-                        <p>© 2025 www.myntra.com. All rights reserved.</p>
+                        <p>© 2026 www.myntra.com. All rights reserved.</p>
                         <p className="text-right mt-1">A Flipkart company</p>
+                        <p>"Disclaimer: This is NOT a real store. It is a student portfolio project."</p>
                     </div>
                 </div>
             </div>
