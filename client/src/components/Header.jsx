@@ -115,9 +115,11 @@ const Header = () => {
                 <div className="flex items-center justify-between h-full">
 
                     {/* Logo */}
-                    <Link to="/" className="flex-shrink-0">
-                        <img src="/myntraLogo.png" alt="Logo" className="h-10 md:h-12" />
-                    </Link>
+                    <Link to="/" className="flex-shrink-0 flex items-center">
+    <span className="text-2xl md:text-3xl font-[900] italic tracking-tighter bg-gradient-to-tr from-[#ff3f6c] via-[#ff3f6c] to-[#ffb31a] bg-clip-text text-transparent uppercase">
+        Zyntra
+    </span>
+</Link>
 
                     {/* Nav Items */}
                     <nav className="hidden lg:flex space-x-7 ml-10 uppercase text-[13px] font-bold tracking-tight text-gray-800 h-full items-center">
