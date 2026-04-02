@@ -154,7 +154,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // 5. Routes API
-app.use("/auth", googleAuthRoutes);
+app.use("/api/auth", googleAuthRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
