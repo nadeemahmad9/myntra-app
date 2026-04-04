@@ -50,7 +50,7 @@ router.get(
 
         // Redirect with Cookie (Secure Way)
         res.cookie("token", token, options)
-           .redirect(`${process.env.FRONTEND_URL}/dashboard`); 
+           .redirect(`${process.env.frontend_Url}/dashboard`); 
     })
 );
 
