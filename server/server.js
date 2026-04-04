@@ -77,7 +77,7 @@
 // app.listen(PORT, console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`))
 
 
-
+import cookieParser from "cookie-parser";
 import express from "express";
 import dotenv from "dotenv";
 import morgan from "morgan"; // Logging ke liye zaroori hai
@@ -113,6 +113,7 @@ if (process.env.NODE_ENV === "development") {
 
 // 2. Security & Parsers
 app.use(express.json({ limit: "16kb" })); // Body size limit for security
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 // 2. Security & Parsers (Updated for Production)
 const allowedOrigins = [
