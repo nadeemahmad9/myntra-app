@@ -31,6 +31,7 @@ import Beauty from "./pages/Beauty"
 
 // Redux Actions (Taaki app load hote hi cart/user sync ho jaye)
 import { fetchCart } from "./redux/slices/cartSlice"
+import { loadUser } from './redux/authSlice';
 
 import "./App.css"
 import ScrollToTop from "./components/ScrollToTop"
