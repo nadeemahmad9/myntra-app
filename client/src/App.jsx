@@ -46,6 +46,14 @@ function App() {
     }
   }, [isAuthenticated, dispatch])
 
+
+  useEffect(() => {
+    // Agar localStorage khali hai lekin user browser mein cookie le kar aaya hai
+    if (!localStorage.getItem('userInfo')) {
+      dispatch(loadUser());
+    }
+  }, [dispatch]);
+
   return (
     <div className="App">
       <ScrollToTop />
