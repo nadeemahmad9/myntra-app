@@ -29,7 +29,7 @@ export const registerUser = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const config = { headers: { 'Content-Type': 'application/json' } };
-      // Backend route: /api/users (aapke controller ke mutabik)
+      // Backend route: /api/users 
       const { data } = await axios.post('https://myntra-backend-he3a.onrender.com/api/users', userData, config);
 
       const userInfo = {
@@ -42,6 +42,24 @@ export const registerUser = createAsyncThunk(
       return userInfo;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
+// ✅ 3. Load User Thunk (Cookie based)
+export const loadUser = createAsyncThunk(
+  'auth/loadUser',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get('https://myntra-backend-he3a.onrender.com/api/users/profile', {
+        withCredentials: true // for send the cookies
+      });
+      
+      localStorage.setItem('userInfo', JSON.stringify(data.user));
+      return data.user;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message);
     }
   }
 );
