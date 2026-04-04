@@ -121,7 +121,6 @@ import api from '../../utils/api';
 export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWithValue }) => {
     try {
         const { data } = await api.get('/cart');
-          withCredentials: true //Yeh har request mein hona chahiye jo "protect" hai
         // Backend returns: { success: true, cartItems: [...] }
         return data.cartItems || [];
     } catch (error) {
