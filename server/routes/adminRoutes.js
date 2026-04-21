@@ -2,7 +2,6 @@
 import express from 'express';
 const router = express.Router();
 
-// Note: Controllers aur Middleware ke aage .js extension zaroori hai
 import { getAdminStats, createProduct } from "../controllers/adminController.js";
 import { protect,admin } from "../middleware/authMiddleware.js";
 
