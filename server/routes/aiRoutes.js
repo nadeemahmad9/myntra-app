@@ -27,8 +27,57 @@
 // });
 
 
+// import express from "express";
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+// import dotenv from "dotenv";
+
+// dotenv.config();
+
+// const router = express.Router();
+
+// router.post("/chat", async (req, res) => {
+//     try {
+//         const { prompt } = req.body;
+
+//         if (!process.env.GEMINI_API_KEY) {
+//             console.error("CRITICAL: GEMINI_API_KEY is missing in Env Variables");
+//             return res.status(500).json({ success: false, message: "API Key setup missing" });
+//         }
+
+//         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        
+//         // Model name check: 1.5-flash sabse fast aur stable hai
+//         const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+//         const systemPrompt = `You are Zyntra Stylist, a helpful fashion expert for an Indian e-commerce site. 
+//         Keep answers short and trendy. User: ${prompt}`;
+
+//         const result = await model.generateContent(systemPrompt);
+//         const response = await result.response;
+//         const text = response.text();
+
+//         res.json({ success: true, reply: text });
+
+//     } catch (error) {
+//         // Yeh logs aapko Render ke "Logs" tab mein dikhenge
+//         console.error("GEMINI API ERROR:", error.message);
+//         res.status(500).json({ 
+//             success: false, 
+//             message: "AI Assistant is busy!",
+//             error_debug: error.message // Yeh sirf testing ke liye hai
+//         });
+//     }
+// });
+
+// export default router;
+// export default router;
+
+
+
+
+
 import express from "express";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import axios from "axios";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -38,36 +87,38 @@ const router = express.Router();
 router.post("/chat", async (req, res) => {
     try {
         const { prompt } = req.body;
+        const apiKey = process.env.GEMINI_API_KEY;
 
-        if (!process.env.GEMINI_API_KEY) {
-            console.error("CRITICAL: GEMINI_API_KEY is missing in Env Variables");
-            return res.status(500).json({ success: false, message: "API Key setup missing" });
+        if (!apiKey) {
+            return res.status(500).json({ success: false, message: "API Key missing" });
         }
 
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        
-        // Model name check: 1.5-flash sabse fast aur stable hai
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        // Direct API Call (Bina SDK ke) - v1 version use karenge jo stable hai
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`;
 
-        const systemPrompt = `You are Zyntra Stylist, a helpful fashion expert for an Indian e-commerce site. 
-        Keep answers short and trendy. User: ${prompt}`;
+        const response = await axios.post(url, {
+            contents: [{
+                parts: [{
+                    text: `You are Zyntra Stylist. Help the user with fashion. User: ${prompt}`
+                }]
+            }]
+        }, {
+            headers: { 'Content-Type': 'application/json' }
+        });
 
-        const result = await model.generateContent(systemPrompt);
-        const response = await result.response;
-        const text = response.text();
+        // Response extract karein
+        const aiReply = response.data.candidates[0].content.parts[0].text;
 
-        res.json({ success: true, reply: text });
+        res.json({ success: true, reply: aiReply });
 
     } catch (error) {
-        // Yeh logs aapko Render ke "Logs" tab mein dikhenge
-        console.error("GEMINI API ERROR:", error.message);
+        console.error("AXIOS AI ERROR:", error.response?.data || error.message);
         res.status(500).json({ 
             success: false, 
-            message: "AI Assistant is busy!",
-            error_debug: error.message // Yeh sirf testing ke liye hai
+            message: "AI Stylist is busy!",
+            error_details: error.response?.data?.error?.message || error.message
         });
     }
 });
 
 export default router;
-// export default router;
