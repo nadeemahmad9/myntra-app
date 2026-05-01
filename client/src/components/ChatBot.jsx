@@ -17,7 +17,7 @@ const ChatBot = () => {
         setInput('');
 
         try {
-            const { data } = await axios.post('https://myntra-backend-he3a.onrender.com/api/ai/chat', { prompt: input }), { withCredentials: true };
+            const { data } = await axios.post('https://myntra-backend-he3a.onrender.com/api/ai/chat', { prompt: input },{ withCredentials: true });
             setMessages(prev => [...prev, { role: 'ai', text: data.reply }]);
         } catch (error) {
             setMessages(prev => [...prev, { role: 'ai', text: "Error connecting to AI." }]);
