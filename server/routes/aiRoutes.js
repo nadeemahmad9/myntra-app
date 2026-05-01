@@ -142,7 +142,7 @@ router.post("/chat", async (req, res) => {
         }
 
         // ✅ Updated URL: v1 version + gemini-1.5-flash model
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-flash:generateContent?key=${apiKey}`;
 
         const response = await axios.post(url, {
             contents: [{
