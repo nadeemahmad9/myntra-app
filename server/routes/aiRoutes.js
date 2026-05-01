@@ -47,7 +47,7 @@ router.post("/chat", async (req, res) => {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         
         // Model name check: 1.5-flash sabse fast aur stable hai
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
         const systemPrompt = `You are Zyntra Stylist, a helpful fashion expert for an Indian e-commerce site. 
         Keep answers short and trendy. User: ${prompt}`;
