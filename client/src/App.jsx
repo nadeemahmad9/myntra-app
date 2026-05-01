@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 
 // Components
+import ChatBot from "./components/ChatBot"
 import Header from "./components/Header"
 import Footer from "./components/Footer"
 
@@ -91,6 +92,7 @@ function App() {
           <Route path="/order-success/:id" element={<OrderSuccess />} />
         </Routes>
       </main>
+      <ChatBot/>
 
       <Footer />
 
