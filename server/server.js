@@ -96,6 +96,7 @@ import cartRoutes from "./routes/cartRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import googleAuthRoutes from "./routes/googleAuth.js";
 import adminRoutes from "./routes/adminRoutes.js"
+import aiRoutes from "./routes/aiRoutes.js";
 
 
 // Load env vars early
@@ -162,6 +163,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/admin", adminRoutes) 
+app.use("/api/ai", aiRoutes)
 
 
 // Healthy check route
