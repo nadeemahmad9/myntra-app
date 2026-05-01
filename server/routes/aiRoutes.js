@@ -1,7 +1,10 @@
 import express from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+
 const router = express.Router();
+import dotenv from "dotenv";
+dotenv.config();
 
 router.post("/chat", async (req, res) => {
     try {
