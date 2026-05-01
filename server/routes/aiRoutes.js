@@ -124,6 +124,59 @@
 // export default router;
 
 
+// import express from "express";
+// import axios from "axios";
+// import dotenv from "dotenv";
+
+// dotenv.config();
+
+// const router = express.Router();
+
+// router.post("/chat", async (req, res) => {
+//     try {
+//         const { prompt } = req.body;
+//         const apiKey = process.env.GEMINI_API_KEY;
+
+//         if (!apiKey) {
+//             return res.status(500).json({ success: false, message: "API Key missing in .env" });
+//         }
+
+//         // ✅ Updated URL: v1 version + gemini-1.5-flash model
+//         const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-flash:generateContent?key=${apiKey}`;
+
+//         const response = await axios.post(url, {
+//             contents: [{
+//                 parts: [{
+//                     text: `You are Zyntra Stylist, a fashion expert for a Myntra-like store. 
+//                     User question: ${prompt}`
+//                 }]
+//             }]
+//         }, {
+//             headers: { 'Content-Type': 'application/json' }
+//         });
+
+//         if (response.data && response.data.candidates) {
+//             const aiReply = response.data.candidates[0].content.parts[0].text;
+//             res.json({ success: true, reply: aiReply });
+//         } else {
+//             throw new Error("Invalid response structure from Google");
+//         }
+
+//     } catch (error) {
+//         console.error("DETAILED ERROR:", error.response?.data || error.message);
+        
+//         // Agar ab bhi 404 aaye, toh iska matlab API Key ka issue hai
+//         res.status(500).json({ 
+//             success: false, 
+//             message: "AI Stylist is busy!",
+//             error_details: error.response?.data?.error?.message || error.message
+//         });
+//     }
+// });
+
+// export default router;
+
+
 import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
@@ -138,34 +191,30 @@ router.post("/chat", async (req, res) => {
         const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
-            return res.status(500).json({ success: false, message: "API Key missing in .env" });
+            return res.status(500).json({ success: false, message: "API Key missing" });
         }
 
-        // ✅ Updated URL: v1 version + gemini-1.5-flash model
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-flash:generateContent?key=${apiKey}`;
+        // ✅ URL mein "gemini-2.5-flash" aur "v1beta" use kiya hai
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
         const response = await axios.post(url, {
             contents: [{
                 parts: [{
-                    text: `You are Zyntra Stylist, a fashion expert for a Myntra-like store. 
-                    User question: ${prompt}`
+                    text: `You are Zyntra Stylist, a helpful fashion expert. User: ${prompt}`
                 }]
             }]
-        }, {
-            headers: { 'Content-Type': 'application/json' }
         });
 
+        // Response check karein
         if (response.data && response.data.candidates) {
             const aiReply = response.data.candidates[0].content.parts[0].text;
             res.json({ success: true, reply: aiReply });
         } else {
-            throw new Error("Invalid response structure from Google");
+            throw new Error("Unexpected API response format");
         }
 
     } catch (error) {
-        console.error("DETAILED ERROR:", error.response?.data || error.message);
-        
-        // Agar ab bhi 404 aaye, toh iska matlab API Key ka issue hai
+        console.error("AI ERROR:", error.response?.data || error.message);
         res.status(500).json({ 
             success: false, 
             message: "AI Stylist is busy!",
